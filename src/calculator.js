@@ -1,11 +1,13 @@
-const HALF_50_INCH_ROLL_FEET = 25 / 12;
+const TEN_FOOT_TOP_STRIP_FEET = 2;
 
 export const KITS = [
   {
     id: "single",
     name: "Single Door Kit",
+    label: "1x Single Garage Door Kit",
     widthInches: 50,
     linearFeet: 37.5,
+    coverageSqft: 150,
     price: 189,
     tapeRolls: 1,
     seamTapeRolls: 1,
@@ -14,8 +16,10 @@ export const KITS = [
   {
     id: "double",
     name: "Double Door Kit",
+    label: "1x Double Garage Door Kit",
     widthInches: 50,
     linearFeet: 52.5,
+    coverageSqft: 205,
     price: 219,
     tapeRolls: 1,
     seamTapeRolls: 1,
@@ -24,8 +28,10 @@ export const KITS = [
   {
     id: "oversized",
     name: "Oversized Door(s) Kit",
+    label: "1x Oversized Garage Door Kit",
     widthInches: 50,
     linearFeet: 72,
+    coverageSqft: 295,
     price: 269,
     tapeRolls: 2,
     seamTapeRolls: 1,
@@ -34,8 +40,10 @@ export const KITS = [
   {
     id: "multi50",
     name: "Multi-Door Kit - 50\" Wide",
+    label: "1x Multi-Door Kit - 50\" Wide",
     widthInches: 50,
     linearFeet: 168,
+    coverageSqft: 700,
     price: 399,
     tapeRolls: 3,
     seamTapeRolls: 2,
@@ -45,8 +53,10 @@ export const KITS = [
   {
     id: "multi62",
     name: "Multi-Door Kit - 62\" Wide",
+    label: "1x Multi-Door Kit - 62\" Wide",
     widthInches: 62,
     linearFeet: 135,
+    coverageSqft: 700,
     price: 399,
     tapeRolls: 3,
     seamTapeRolls: 2,
@@ -55,14 +65,37 @@ export const KITS = [
   }
 ];
 
+const CUSTOM_RECOMMENDATION = {
+  id: "custom",
+  name: "Custom / Larger Roll Needed",
+  label: "Custom / Larger Roll Needed",
+  widthInches: null,
+  linearFeet: null,
+  coverageSqft: null,
+  price: null,
+  tapeRolls: 0,
+  seamTapeRolls: 0,
+  type: "custom"
+};
+
+function kitById(id) {
+  if (id === "custom") return CUSTOM_RECOMMENDATION;
+  return KITS.find((kit) => kit.id === id);
+}
+
 export function normalizeRows(rows) {
   return rows
     .map((row) => ({
       width: Number(row.width),
       height: Number(row.height),
-      qty: Math.max(1, Math.floor(Number(row.qty) || 1))
+      qty: Math.max(0, Math.floor(Number(row.qty) || 0))
     }))
-    .filter((row) => row.width > 0 && row.height > 0 && row.qty > 0);
+    .filter((row) => row.width > 0 && row.height > 0 && row.qty > 0)
+    .map((row) => ({
+      ...row,
+      perDoorArea: row.width * row.height,
+      totalRowArea: row.width * row.height * row.qty
+    }));
 }
 
 export function expandDoors(rows) {
@@ -71,31 +104,44 @@ export function expandDoors(rows) {
       width: row.width,
       height: row.height,
       groupIndex,
-      instance: qtyIndex + 1
+      instance: qtyIndex + 1,
+      squareFeet: row.perDoorArea
     }))
   );
 }
 
+export function calculateRunsForRow(row) {
+  const runs50 = Math.ceil(row.height / 4);
+  const runs62 = Math.ceil(row.height / 5);
+
+  return {
+    width: row.width,
+    height: row.height,
+    qty: row.qty,
+    perDoorArea: row.perDoorArea,
+    totalRowArea: row.totalRowArea,
+    runs50,
+    runs62,
+    footage50: runs50 * row.width * row.qty,
+    footage62: runs62 * row.width * row.qty
+  };
+}
+
 export function calculateDoor(door) {
   const runs50 = Math.ceil(door.height / 4);
-  const remainder50 = door.height % 4;
-  const eligibleForSharedTop =
-    remainder50 > 0 && remainder50 <= HALF_50_INCH_ROLL_FEET;
   const runs62 = Math.ceil(door.height / 5);
 
   return {
     ...door,
-    squareFeet: door.width * door.height,
     runs50,
     runs62,
     linear50Max: runs50 * door.width,
     linear62: runs62 * door.width,
-    remainder50,
-    eligibleForSharedTop
+    eligibleForSharedTop: door.height === 10
   };
 }
 
-function calculateSharedSavings(doors) {
+function calculateSharedTopStripSavings(doors) {
   const eligibleWidths = doors
     .filter((door) => door.eligibleForSharedTop)
     .map((door) => door.width)
@@ -106,141 +152,319 @@ function calculateSharedSavings(doors) {
     savings += Math.min(eligibleWidths[index], eligibleWidths[index + 1]);
   }
 
-  return savings;
+  return savings * (TEN_FOOT_TOP_STRIP_FEET / 2);
 }
 
-function makeCombination(counts) {
-  const items = Object.entries(counts)
-    .filter(([, qty]) => qty > 0)
-    .map(([id, qty]) => {
-      const kit = KITS.find((item) => item.id === id);
-      return {
-        ...kit,
-        qty
-      };
-    });
+export function classifyRequest(rows) {
+  const normalizedRows = normalizeRows(rows);
+  const totalDoorCount = normalizedRows.reduce((sum, row) => sum + row.qty, 0);
+  const totalArea = normalizedRows.reduce((sum, row) => sum + row.totalRowArea, 0);
+  const maxSingleDoorArea = normalizedRows.reduce(
+    (max, row) => Math.max(max, row.perDoorArea),
+    0
+  );
+  const allDoorsSameSize =
+    normalizedRows.length > 0 &&
+    normalizedRows.every(
+      (row) =>
+        row.width === normalizedRows[0].width &&
+        row.height === normalizedRows[0].height
+    );
+  const onlyOneActiveDoorRow = normalizedRows.length === 1;
+  const exactlyOneTotalDoor = totalDoorCount === 1;
+  const everyDoorAtMost10x10 = normalizedRows.every(
+    (row) => row.width <= 10 && row.height <= 10
+  );
 
   return {
-    items,
-    totalLinearFeet: items.reduce(
-      (sum, item) => sum + item.linearFeet * item.qty,
-      0
-    ),
-    totalPrice: items.reduce((sum, item) => sum + item.price * item.qty, 0),
-    tapeRolls: items.reduce((sum, item) => sum + item.tapeRolls * item.qty, 0),
-    seamTapeRolls: items.reduce(
-      (sum, item) => sum + item.seamTapeRolls * item.qty,
-      0
-    ),
-    containsMulti62: items.some((item) => item.id === "multi62"),
-    containsMultiDoor: items.some((item) => item.multiDoor)
+    rows: normalizedRows,
+    totalDoorCount,
+    totalArea,
+    maxSingleDoorArea,
+    allDoorsSameSize,
+    onlyOneActiveDoorRow,
+    exactlyOneTotalDoor,
+    everyDoorAtMost10x10,
+    requestType:
+      totalDoorCount === 1
+        ? "single-door"
+        : totalDoorCount === 2
+          ? "two-door"
+          : totalDoorCount >= 3
+            ? "multi-door"
+            : "empty"
   };
 }
 
-function candidate50Combinations(requiredFeet) {
-  const candidates = [];
-  const maxMulti = Math.ceil(requiredFeet / 168) + 1;
+function isMulti50UseCase(classification) {
+  if (!classification.allDoorsSameSize) return false;
+  const [row] = classification.rows;
+  if (!row) return false;
 
-  for (let multi50 = 0; multi50 <= maxMulti; multi50 += 1) {
-    for (let oversized = 0; oversized <= 3; oversized += 1) {
-      for (let double = 0; double <= 3; double += 1) {
-        for (let single = 0; single <= 3; single += 1) {
-          const candidate = makeCombination({
-            multi50,
-            oversized,
-            double,
-            single
-          });
+  const fitsEightFootSet =
+    classification.totalDoorCount >= 5 &&
+    classification.totalDoorCount <= 10 &&
+    row.width <= 8 &&
+    row.height <= 8;
+  const fitsTwelveFootSet =
+    classification.totalDoorCount >= 3 &&
+    classification.totalDoorCount <= 4 &&
+    row.width <= 12 &&
+    row.height <= 12;
 
-          if (candidate.totalLinearFeet >= requiredFeet) {
-            candidates.push(candidate);
-          }
-        }
-      }
+  return fitsEightFootSet || fitsTwelveFootSet;
+}
+
+function isMulti62UseCase(classification) {
+  if (!classification.allDoorsSameSize) return false;
+  const [row] = classification.rows;
+  if (!row) return false;
+
+  const fitsTenFootSet =
+    classification.totalDoorCount >= 3 &&
+    classification.totalDoorCount <= 6 &&
+    row.width <= 10 &&
+    row.height === 10;
+  const fitsFifteenFootSet =
+    classification.totalDoorCount >= 3 &&
+    classification.totalDoorCount <= 6 &&
+    row.width <= 15 &&
+    row.height === 15;
+
+  return fitsTenFootSet || fitsFifteenFootSet;
+}
+
+export function getEligibleFamilies(classification) {
+  if (classification.totalDoorCount === 0) return [];
+
+  if (classification.totalDoorCount === 1) {
+    const [row] = classification.rows;
+    if (row.width <= 12 && row.height <= 12 && row.perDoorArea <= 150) {
+      return ["single", "double", "oversized"];
     }
+    if (row.perDoorArea <= 205) {
+      return ["double", "oversized"];
+    }
+    if (row.perDoorArea <= 295) {
+      return ["oversized"];
+    }
+    return ["custom"];
   }
 
-  return candidates.sort((a, b) => {
-    const priceDelta = a.totalPrice - b.totalPrice;
-    if (priceDelta !== 0) return priceDelta;
-
-    const wasteDelta =
-      a.totalLinearFeet - requiredFeet - (b.totalLinearFeet - requiredFeet);
-    if (wasteDelta !== 0) return wasteDelta;
-
-    return a.items.length - b.items.length;
-  });
-}
-
-function candidate62Combination(requiredFeet) {
-  const qty = Math.ceil(requiredFeet / 135);
-  return makeCombination({ multi62: qty });
-}
-
-function recommendationNote(best, totals) {
-  if (!best) return "";
-
-  if (best.containsMulti62) {
-    return "Uses the 62-inch multi-door roll, which can reduce the number of horizontal runs on 10-foot, 14-foot, and 15-foot door heights.";
+  if (classification.totalDoorCount === 2) {
+    const eligible = [];
+    if (classification.everyDoorAtMost10x10 || classification.totalArea <= 205) {
+      eligible.push("double");
+    }
+    if (classification.totalArea <= 295) {
+      eligible.push("oversized");
+    }
+    if (isMulti50UseCase(classification)) eligible.push("multi50");
+    if (isMulti62UseCase(classification)) eligible.push("multi62");
+    return eligible.length > 0 ? eligible : ["custom"];
   }
 
-  if (totals.sharedSavings > 0) {
-    return "Assumes eligible top strips are ripped lengthwise and shared across paired doors where practical.";
-  }
-
-  return "Uses the standard 50-inch roll-up door calculation with no shared top-strip savings needed.";
+  const eligible = [];
+  if (isMulti50UseCase(classification)) eligible.push("multi50");
+  if (isMulti62UseCase(classification)) eligible.push("multi62");
+  return eligible.length > 0 ? eligible : ["custom"];
 }
 
-export function recommendKits(totals) {
-  if (totals.doorCount === 0) return null;
-
-  const required50 = totals.linear50Shared;
-  const standardCandidates = candidate50Combinations(required50);
-  const best50 = standardCandidates[0];
-
-  const multi62 = candidate62Combination(totals.linear62);
-  const multi62Fits = totals.linear62 <= multi62.totalLinearFeet;
-  const multi62Practical =
-    multi62Fits &&
-    totals.linear62 < required50 &&
-    multi62.totalPrice <= (best50?.totalPrice || Infinity);
-
-  const best = multi62Practical ? multi62 : best50;
-  const alternate = multi62Practical ? best50 : multi62Fits ? multi62 : null;
+export function calculateMaterialMath(rows) {
+  const normalizedRows = normalizeRows(rows);
+  const doors = expandDoors(rows).map(calculateDoor);
+  const runsByRow = normalizedRows.map(calculateRunsForRow);
+  const footage50 = runsByRow.reduce((sum, row) => sum + row.footage50, 0);
+  const footage62 = runsByRow.reduce((sum, row) => sum + row.footage62, 0);
+  const sharedTopStripSavings = calculateSharedTopStripSavings(doors);
 
   return {
-    best: best
-      ? {
-          ...best,
-          requiredLinearFeet: best.containsMulti62
-            ? totals.linear62
-            : required50,
-          spareLinearFeet:
-            best.totalLinearFeet -
-            (best.containsMulti62 ? totals.linear62 : required50),
-          note: recommendationNote(best, totals)
-        }
-      : null,
-    alternate:
-      alternate && alternate.totalLinearFeet >= (alternate.containsMulti62 ? totals.linear62 : required50)
-        ? {
-            ...alternate,
-            requiredLinearFeet: alternate.containsMulti62
-              ? totals.linear62
-              : required50,
-            spareLinearFeet:
-              alternate.totalLinearFeet -
-              (alternate.containsMulti62 ? totals.linear62 : required50),
-            note: recommendationNote(alternate, totals)
-          }
-        : null
+    totalArea: normalizedRows.reduce((sum, row) => sum + row.totalRowArea, 0),
+    totalDoorCount: normalizedRows.reduce((sum, row) => sum + row.qty, 0),
+    footage50,
+    footage62,
+    efficient50Footage: Math.max(0, footage50 - sharedTopStripSavings),
+    sharedTopStripSavings,
+    runsByRow
+  };
+}
+
+export function calculateFootageForFamily(materialMath, family) {
+  if (family === "multi62") return materialMath.footage62;
+  if (family === "custom") return null;
+  return materialMath.efficient50Footage;
+}
+
+function makeRecommendation(family, classification, materialMath) {
+  const kit = kitById(family);
+  const requiredLinearFeet = calculateFootageForFamily(materialMath, family);
+  const item =
+    family === "custom"
+      ? null
+      : {
+          ...kit,
+          qty: 1
+        };
+
+  return {
+    family,
+    label: kit.label,
+    estimatedPrice: kit.price,
+    requiredLinearFeet,
+    totalLinearFeet: kit.linearFeet,
+    spareLinearFeet:
+      kit.linearFeet === null || requiredLinearFeet === null
+        ? null
+        : kit.linearFeet - requiredLinearFeet,
+    coverageSqft: kit.coverageSqft,
+    tapeRolls: kit.tapeRolls,
+    seamTapeRolls: kit.seamTapeRolls,
+    containsMultiDoor: Boolean(kit.multiDoor),
+    containsMulti62: family === "multi62",
+    items: item ? [item] : [],
+    reasoning: buildExplanation(family, classification, materialMath)
+  };
+}
+
+function compareMultiDoorFamilies(a, b) {
+  if (a.family === b.family) return 0;
+  const aClean = a.requiredLinearFeet <= a.totalLinearFeet;
+  const bClean = b.requiredLinearFeet <= b.totalLinearFeet;
+  if (aClean !== bClean) return aClean ? -1 : 1;
+
+  const aWaste = a.totalLinearFeet - a.requiredLinearFeet;
+  const bWaste = b.totalLinearFeet - b.requiredLinearFeet;
+  if (aWaste !== bWaste) return aWaste - bWaste;
+
+  if (a.estimatedPrice !== b.estimatedPrice) {
+    return a.estimatedPrice - b.estimatedPrice;
+  }
+
+  return a.family === "multi62" ? -1 : 1;
+}
+
+export function choosePrimaryRecommendation(eligibleResults, classification) {
+  if (eligibleResults.length === 0) return null;
+
+  if (classification.totalDoorCount === 1) {
+    const priority = ["single", "double", "oversized", "custom"];
+    return eligibleResults.sort(
+      (a, b) => priority.indexOf(a.family) - priority.indexOf(b.family)
+    )[0];
+  }
+
+  if (classification.totalDoorCount === 2) {
+    const priority = ["double", "oversized", "custom"];
+    return eligibleResults.sort(
+      (a, b) => priority.indexOf(a.family) - priority.indexOf(b.family)
+    )[0];
+  }
+
+  const multiDoorResults = eligibleResults.filter((result) =>
+    ["multi50", "multi62"].includes(result.family)
+  );
+  if (multiDoorResults.length > 0) {
+    return multiDoorResults.sort(compareMultiDoorFamilies)[0];
+  }
+
+  return eligibleResults.find((result) => result.family === "custom");
+}
+
+export function buildExplanation(family, classification, materialMath) {
+  if (family === "single") {
+    return [
+      "This is one door within the Single kit limit of 12' x 12' and 150 sq ft, so the Single Garage Door Kit is the correct standard kit."
+    ];
+  }
+
+  if (family === "double" && classification.totalDoorCount === 1) {
+    return [
+      "This is one larger door over the Single kit size, but it is under the 205 sq ft Double kit limit, so the Double Garage Door Kit is the correct standard kit."
+    ];
+  }
+
+  if (family === "double") {
+    return [
+      "This two-door layout fits the Double kit family before any multi-door options are considered."
+    ];
+  }
+
+  if (family === "oversized" && classification.totalDoorCount === 1) {
+    return [
+      "This is a single large door under the 295 sq ft limit, so the Oversized Garage Door Kit is the correct standard kit."
+    ];
+  }
+
+  if (family === "oversized") {
+    return [
+      "This layout is above the Double kit range but stays within the 295 sq ft Oversized kit limit, so the Oversized Garage Door Kit is the correct standard kit."
+    ];
+  }
+
+  if (family === "multi62") {
+    return [
+      "This layout is a true multi-door use case with doors that align with the 62\" multi-door kit rules.",
+      "The calculator compares multi-door layouts after confirming the request belongs in the multi-door product family."
+    ];
+  }
+
+  if (family === "multi50") {
+    return [
+      "This layout is a true multi-door use case that matches the 50\" multi-door kit assumptions.",
+      "Multi-door kits are considered only after door count and size rules confirm the product family is valid."
+    ];
+  }
+
+  return [
+    "This layout exceeds the standard pre-made kit limits, so a custom larger-roll setup is recommended.",
+    `${materialMath.footage50}' of 50\" planning footage and ${materialMath.footage62}' of 62\" planning footage were calculated for quoting.`
+  ];
+}
+
+export function recommendKits(rows) {
+  const classification = classifyRequest(rows);
+  const materialMath = calculateMaterialMath(rows);
+  const eligibleFamilies = getEligibleFamilies(classification);
+  const eligibleResults = eligibleFamilies.map((family) =>
+    makeRecommendation(family, classification, materialMath)
+  );
+  const primaryRecommendation = choosePrimaryRecommendation(
+    eligibleResults,
+    classification
+  );
+  const alternativeRecommendations = eligibleResults.filter(
+    (result) => result.family !== primaryRecommendation?.family
+  );
+  const warnings = [];
+
+  if (primaryRecommendation?.family === "custom") {
+    warnings.push(
+      "Standard kit limits are exceeded. Use the footage math for a custom roll or manual quote."
+    );
+  }
+
+  if (
+    primaryRecommendation?.spareLinearFeet !== null &&
+    primaryRecommendation?.spareLinearFeet < 0
+  ) {
+    warnings.push(
+      "This recommendation follows BlueTex kit coverage limits first. Check final strip layout for unusually wide doors."
+    );
+  }
+
+  return {
+    primaryRecommendation,
+    alternativeRecommendations,
+    materialMath,
+    explanation: primaryRecommendation?.reasoning || [],
+    warnings
   };
 }
 
 export function calculateTapePlan(doors, recommendation) {
-  if (!recommendation?.best) return [];
+  if (!recommendation?.primaryRecommendation) return [];
 
-  const spacingInches = recommendation.best.containsMultiDoor ? 18 : 18;
+  const spacingInches = 18;
   return doors.map((door) => {
     const strips = Math.ceil((door.width * 12) / spacingInches) + 1;
     const tighterStrips = Math.ceil((door.width * 12) / 12) + 1;
@@ -256,34 +480,32 @@ export function calculateTapePlan(doors, recommendation) {
 }
 
 export function calculate(rows) {
+  const normalizedRows = normalizeRows(rows);
   const doors = expandDoors(rows).map(calculateDoor);
-  const squareFeet = doors.reduce((sum, door) => sum + door.squareFeet, 0);
-  const linear50Max = doors.reduce((sum, door) => sum + door.linear50Max, 0);
-  const sharedSavings = calculateSharedSavings(doors);
-  const linear50Shared = linear50Max - sharedSavings;
-  const linear62 = doors.reduce((sum, door) => sum + door.linear62, 0);
-  const totals = {
-    doorCount: doors.length,
-    squareFeet,
-    linear50Max,
-    sharedSavings,
-    linear50Shared,
-    linear62
-  };
-  const recommendation = recommendKits(totals);
+  const recommendation = recommendKits(rows);
+  const materialMath = recommendation.materialMath;
   const tapePlan = calculateTapePlan(doors, recommendation);
   const tapeFeetNeeded = tapePlan.reduce((sum, door) => sum + door.tapeFeet, 0);
   const tighterTapeFeetNeeded = tapePlan.reduce(
     (sum, door) => sum + door.tighterTapeFeet,
     0
   );
-  const tapeFeetIncluded = (recommendation?.best?.tapeRolls || 0) * 180;
+  const tapeFeetIncluded =
+    (recommendation.primaryRecommendation?.tapeRolls || 0) * 180;
 
   return {
-    rows: normalizeRows(rows),
+    rows: normalizedRows,
     doors,
-    totals,
+    totals: {
+      doorCount: materialMath.totalDoorCount,
+      squareFeet: materialMath.totalArea,
+      linear50Max: materialMath.footage50,
+      sharedSavings: materialMath.sharedTopStripSavings,
+      linear50Shared: materialMath.efficient50Footage,
+      linear62: materialMath.footage62
+    },
     recommendation,
+    materialMath,
     tapePlan,
     tapeFeetNeeded,
     tighterTapeFeetNeeded,
@@ -293,11 +515,13 @@ export function calculate(rows) {
 }
 
 export function formatFeet(value) {
+  if (value === null || Number.isNaN(Number(value))) return "Custom";
   const rounded = Math.round(value * 10) / 10;
   return Number.isInteger(rounded) ? `${rounded}'` : `${rounded.toFixed(1)}'`;
 }
 
 export function formatMoney(value) {
+  if (value === null || Number.isNaN(Number(value))) return "Contact for sizing";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",

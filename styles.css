@@ -72,18 +72,11 @@ input {
   text-decoration: none;
 }
 
-.brand-mark {
-  align-items: center;
-  background: var(--blue);
-  border-radius: 4px;
-  color: #ffffff;
-  display: inline-flex;
-  font-size: 13px;
-  font-weight: 900;
-  height: 34px;
-  justify-content: center;
-  letter-spacing: 0;
-  width: 34px;
+.brand img {
+  display: block;
+  height: 42px;
+  object-fit: contain;
+  width: auto;
 }
 
 nav {
@@ -369,6 +362,19 @@ button:focus {
 .alternate {
   border-top: 1px solid var(--line);
   padding-top: 12px;
+}
+
+.warning-list {
+  background: #fff2e8;
+  border: 1px solid #f1c6a7;
+  border-radius: var(--radius);
+  margin-top: 14px;
+  padding: 12px;
+}
+
+.warning-list p {
+  color: var(--warn);
+  margin: 0;
 }
 
 .math-grid {

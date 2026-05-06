@@ -52,6 +52,10 @@ function readRows() {
 }
 
 function kitList(recommendation) {
+  if (!recommendation.items.length) {
+    return `<li>${recommendation.label}</li>`;
+  }
+
   return recommendation.items
     .map((item) => `<li>${item.qty}x ${item.name}</li>`)
     .join("");
@@ -68,13 +72,26 @@ function renderEmptyState() {
 }
 
 function renderResults(model) {
-  if (!model.totals.doorCount || !model.recommendation?.best) {
+  if (
+    !model.materialMath.totalDoorCount ||
+    !model.recommendation?.primaryRecommendation
+  ) {
     renderEmptyState();
     return;
   }
 
-  const best = model.recommendation.best;
-  const alternate = model.recommendation.alternate;
+  const best = model.recommendation.primaryRecommendation;
+  const alternatives = model.recommendation.alternativeRecommendations;
+  const priceText =
+    best.estimatedPrice === null
+      ? "Contact for custom sizing"
+      : `${formatMoney(best.estimatedPrice)} estimated kit price`;
+  const spareText =
+    best.spareLinearFeet === null
+      ? "Use the footage below for custom quoting"
+      : best.spareLinearFeet >= 0
+        ? `${formatFeet(best.spareLinearFeet)} spare material in this recommendation`
+        : "Selected by product-family coverage limits";
   const tapeStatus =
     model.tapeShortfall > 0
       ? `<span class="status warn">Add tape recommended</span>`
@@ -83,32 +100,30 @@ function renderResults(model) {
   summary.innerHTML = `
     <div class="metric primary">
       <span>Recommended kit</span>
-      <strong>${best.items.map((item) => `${item.qty}x ${item.name}`).join(" + ")}</strong>
-      <small>${formatMoney(best.totalPrice)} estimated kit price</small>
+      <strong>${best.label}</strong>
+      <small>${priceText}</small>
     </div>
     <div class="metric">
-      <span>Linear footage to plan around</span>
+      <span>Material layout footage</span>
       <strong>${formatFeet(best.requiredLinearFeet)}</strong>
-      <small>${formatFeet(best.spareLinearFeet)} spare material in this recommendation</small>
+      <small>${spareText}</small>
     </div>
     <div class="metric">
       <span>Door coverage</span>
-      <strong>${model.totals.doorCount} door${model.totals.doorCount === 1 ? "" : "s"}</strong>
-      <small>${Math.round(model.totals.squareFeet)} sq ft would be misleading by itself</small>
+      <strong>${model.materialMath.totalDoorCount} door${model.materialMath.totalDoorCount === 1 ? "" : "s"}</strong>
+      <small>${Math.round(model.materialMath.totalArea)} sq ft checked against kit limits first</small>
     </div>
   `;
 
-  const doorRows = model.rows
+  const doorRows = model.materialMath.runsByRow
     .map((row) => {
-      const runs50 = Math.ceil(row.height / 4);
-      const runs62 = Math.ceil(row.height / 5);
       return `
         <tr>
           <td>${row.qty}x ${formatFeet(row.width)} W x ${formatFeet(row.height)} H</td>
-          <td>${runs50}</td>
-          <td>${formatFeet(runs50 * row.width * row.qty)}</td>
-          <td>${runs62}</td>
-          <td>${formatFeet(runs62 * row.width * row.qty)}</td>
+          <td>${row.runs50}</td>
+          <td>${formatFeet(row.footage50)}</td>
+          <td>${row.runs62}</td>
+          <td>${formatFeet(row.footage62)}</td>
         </tr>
       `;
     })
@@ -133,14 +148,27 @@ function renderResults(model) {
     <section class="result-panel recommendation">
       <div>
         <h2>Kit Recommendation</h2>
-        <p>${best.note}</p>
+        ${best.reasoning.map((line) => `<p>${line}</p>`).join("")}
       </div>
       <ul>${kitList(best)}</ul>
       ${
-        alternate
-          ? `<p class="alternate">Alternative: ${alternate.items
-              .map((item) => `${item.qty}x ${item.name}`)
-              .join(" + ")} (${formatFeet(alternate.requiredLinearFeet)} required, ${formatFeet(alternate.spareLinearFeet)} spare).</p>`
+        alternatives.length
+          ? `<p class="alternate">Alternatives: ${alternatives
+              .map((item) => {
+                const spare =
+                  item.spareLinearFeet === null
+                    ? "custom sizing"
+                    : `${formatFeet(item.requiredLinearFeet)} layout footage`;
+                return `${item.label} (${spare})`;
+              })
+              .join("; ")}.</p>`
+          : ""
+      }
+      ${
+        model.recommendation.warnings.length
+          ? `<div class="warning-list">${model.recommendation.warnings
+              .map((warning) => `<p>${warning}</p>`)
+              .join("")}</div>`
           : ""
       }
     </section>
@@ -150,19 +178,19 @@ function renderResults(model) {
       <div class="math-grid">
         <div>
           <span>50" max footage</span>
-          <strong>${formatFeet(model.totals.linear50Max)}</strong>
+          <strong>${formatFeet(model.materialMath.footage50)}</strong>
         </div>
         <div>
           <span>Shared top-strip savings</span>
-          <strong>${formatFeet(model.totals.sharedSavings)}</strong>
+          <strong>${formatFeet(model.materialMath.sharedTopStripSavings)}</strong>
         </div>
         <div>
           <span>Efficient 50" footage</span>
-          <strong>${formatFeet(model.totals.linear50Shared)}</strong>
+          <strong>${formatFeet(model.materialMath.efficient50Footage)}</strong>
         </div>
         <div>
           <span>62" multi-door footage</span>
-          <strong>${formatFeet(model.totals.linear62)}</strong>
+          <strong>${formatFeet(model.materialMath.footage62)}</strong>
         </div>
       </div>
       <div class="table-wrap">
@@ -200,7 +228,11 @@ function renderResults(model) {
           <tbody>${tapeRows}</tbody>
         </table>
       </div>
-      <p class="tape-total">Recommended layout: ${formatFeet(model.tapeFeetNeeded)} tape needed. Kit includes about ${formatFeet(model.tapeFeetIncluded)} across ${best.tapeRolls} roll${best.tapeRolls === 1 ? "" : "s"}.</p>
+      <p class="tape-total">Recommended layout: ${formatFeet(model.tapeFeetNeeded)} tape needed. ${
+        best.tapeRolls > 0
+          ? `Kit includes about ${formatFeet(model.tapeFeetIncluded)} across ${best.tapeRolls} roll${best.tapeRolls === 1 ? "" : "s"}.`
+          : "Tape should be quoted with the custom roll setup."
+      }</p>
     </section>
   `;
 }
