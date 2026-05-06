@@ -1,10 +1,8 @@
-const TEN_FOOT_TOP_STRIP_FEET = 2;
-
 export const KITS = [
   {
     id: "single",
     name: "Single Door Kit",
-    label: "1x Single Garage Door Kit",
+    label: "Single Garage Door Kit",
     widthInches: 50,
     linearFeet: 37.5,
     coverageSqft: 150,
@@ -16,7 +14,7 @@ export const KITS = [
   {
     id: "double",
     name: "Double Door Kit",
-    label: "1x Double Garage Door Kit",
+    label: "Double Garage Door Kit",
     widthInches: 50,
     linearFeet: 52.5,
     coverageSqft: 205,
@@ -28,7 +26,7 @@ export const KITS = [
   {
     id: "oversized",
     name: "Oversized Door(s) Kit",
-    label: "1x Oversized Garage Door Kit",
+    label: "Oversized Garage Door Kit",
     widthInches: 50,
     linearFeet: 72,
     coverageSqft: 295,
@@ -40,7 +38,7 @@ export const KITS = [
   {
     id: "multi50",
     name: "Multi-Door Kit - 50\" Wide",
-    label: "1x Multi-Door Kit - 50\" Wide",
+    label: "Multi-Door Kit - 50\" Wide",
     widthInches: 50,
     linearFeet: 168,
     coverageSqft: 700,
@@ -53,7 +51,7 @@ export const KITS = [
   {
     id: "multi62",
     name: "Multi-Door Kit - 62\" Wide",
-    label: "1x Multi-Door Kit - 62\" Wide",
+    label: "Multi-Door Kit - 62\" Wide",
     widthInches: 62,
     linearFeet: 135,
     coverageSqft: 700,
@@ -83,6 +81,13 @@ function kitById(id) {
   return KITS.find((kit) => kit.id === id);
 }
 
+function planLabel(items) {
+  if (!items.length) return CUSTOM_RECOMMENDATION.label;
+  return items
+    .map((item) => `${item.quantity}x ${item.label}`)
+    .join(" + ");
+}
+
 export function normalizeRows(rows) {
   return rows
     .map((row) => ({
@@ -96,6 +101,23 @@ export function normalizeRows(rows) {
       perDoorArea: row.width * row.height,
       totalRowArea: row.width * row.height * row.qty
     }));
+}
+
+function mergeRows(rows) {
+  const merged = new Map();
+
+  for (const row of rows) {
+    const key = `${row.width}x${row.height}`;
+    const existing = merged.get(key);
+    if (existing) {
+      existing.qty += row.qty;
+      existing.totalRowArea += row.totalRowArea;
+    } else {
+      merged.set(key, { ...row });
+    }
+  }
+
+  return [...merged.values()];
 }
 
 export function expandDoors(rows) {
@@ -137,7 +159,7 @@ export function calculateDoor(door) {
     runs62,
     linear50Max: runs50 * door.width,
     linear62: runs62 * door.width,
-    eligibleForSharedTop: door.height === 10
+    eligibleForSharedTop: door.height % 4 === 2
   };
 }
 
@@ -152,11 +174,16 @@ function calculateSharedTopStripSavings(doors) {
     savings += Math.min(eligibleWidths[index], eligibleWidths[index + 1]);
   }
 
-  return savings * (TEN_FOOT_TOP_STRIP_FEET / 2);
+  return savings;
+}
+
+function sharedSavingsForGroup(row, qty) {
+  return row.height % 4 === 2 ? Math.floor(qty / 2) * row.width : 0;
 }
 
 export function classifyRequest(rows) {
   const normalizedRows = normalizeRows(rows);
+  const mergedRows = mergeRows(normalizedRows);
   const totalDoorCount = normalizedRows.reduce((sum, row) => sum + row.qty, 0);
   const totalArea = normalizedRows.reduce((sum, row) => sum + row.totalRowArea, 0);
   const maxSingleDoorArea = normalizedRows.reduce(
@@ -164,12 +191,7 @@ export function classifyRequest(rows) {
     0
   );
   const allDoorsSameSize =
-    normalizedRows.length > 0 &&
-    normalizedRows.every(
-      (row) =>
-        row.width === normalizedRows[0].width &&
-        row.height === normalizedRows[0].height
-    );
+    mergedRows.length === 1 && mergedRows[0].qty === totalDoorCount;
   const onlyOneActiveDoorRow = normalizedRows.length === 1;
   const exactlyOneTotalDoor = totalDoorCount === 1;
   const everyDoorAtMost10x10 = normalizedRows.every(
@@ -178,6 +200,7 @@ export function classifyRequest(rows) {
 
   return {
     rows: normalizedRows,
+    mergedRows,
     totalDoorCount,
     totalArea,
     maxSingleDoorArea,
@@ -194,80 +217,6 @@ export function classifyRequest(rows) {
             ? "multi-door"
             : "empty"
   };
-}
-
-function isMulti50UseCase(classification) {
-  if (!classification.allDoorsSameSize) return false;
-  const [row] = classification.rows;
-  if (!row) return false;
-
-  const fitsEightFootSet =
-    classification.totalDoorCount >= 5 &&
-    classification.totalDoorCount <= 10 &&
-    row.width <= 8 &&
-    row.height <= 8;
-  const fitsTwelveFootSet =
-    classification.totalDoorCount >= 3 &&
-    classification.totalDoorCount <= 4 &&
-    row.width <= 12 &&
-    row.height <= 12;
-
-  return fitsEightFootSet || fitsTwelveFootSet;
-}
-
-function isMulti62UseCase(classification) {
-  if (!classification.allDoorsSameSize) return false;
-  const [row] = classification.rows;
-  if (!row) return false;
-
-  const fitsTenFootSet =
-    classification.totalDoorCount >= 3 &&
-    classification.totalDoorCount <= 6 &&
-    row.width <= 10 &&
-    row.height === 10;
-  const fitsFifteenFootSet =
-    classification.totalDoorCount >= 3 &&
-    classification.totalDoorCount <= 6 &&
-    row.width <= 15 &&
-    row.height === 15;
-
-  return fitsTenFootSet || fitsFifteenFootSet;
-}
-
-export function getEligibleFamilies(classification) {
-  if (classification.totalDoorCount === 0) return [];
-
-  if (classification.totalDoorCount === 1) {
-    const [row] = classification.rows;
-    if (row.width <= 12 && row.height <= 12 && row.perDoorArea <= 150) {
-      return ["single", "double", "oversized"];
-    }
-    if (row.perDoorArea <= 205) {
-      return ["double", "oversized"];
-    }
-    if (row.perDoorArea <= 295) {
-      return ["oversized"];
-    }
-    return ["custom"];
-  }
-
-  if (classification.totalDoorCount === 2) {
-    const eligible = [];
-    if (classification.everyDoorAtMost10x10 || classification.totalArea <= 205) {
-      eligible.push("double");
-    }
-    if (classification.totalArea <= 295) {
-      eligible.push("oversized");
-    }
-    if (isMulti50UseCase(classification)) eligible.push("multi50");
-    if (isMulti62UseCase(classification)) eligible.push("multi62");
-    return eligible.length > 0 ? eligible : ["custom"];
-  }
-
-  const eligible = [];
-  if (isMulti50UseCase(classification)) eligible.push("multi50");
-  if (isMulti62UseCase(classification)) eligible.push("multi62");
-  return eligible.length > 0 ? eligible : ["custom"];
 }
 
 export function calculateMaterialMath(rows) {
@@ -289,180 +238,362 @@ export function calculateMaterialMath(rows) {
   };
 }
 
-export function calculateFootageForFamily(materialMath, family) {
-  if (family === "multi62") return materialMath.footage62;
-  if (family === "custom") return null;
-  return materialMath.efficient50Footage;
+function singleDoorFitsStandardSystem(row) {
+  return row.perDoorArea <= kitById("oversized").coverageSqft;
 }
 
-function makeRecommendation(family, classification, materialMath) {
+function isEightByEightMulti50(row) {
+  return row.width <= 8 && row.height <= 8;
+}
+
+function isTwelveByTwelveMulti50(row) {
+  return row.width <= 12 && row.height <= 12;
+}
+
+function isTenFootMulti62(row) {
+  return row.width <= 10 && row.height === 10;
+}
+
+function isFifteenFootMulti62(row) {
+  return row.width <= 15 && row.height === 15;
+}
+
+function preferredMultiFamily(row) {
+  if (row.qty >= 5 && isEightByEightMulti50(row)) return "multi50";
+  if (row.qty >= 3 && isTwelveByTwelveMulti50(row) && row.height === 12) {
+    return "multi50";
+  }
+  if (row.qty >= 3 && (isTenFootMulti62(row) || isFifteenFootMulti62(row))) {
+    return "multi62";
+  }
+  return null;
+}
+
+function groupFootage(row, family, qty) {
+  if (family === "multi62") {
+    return Math.ceil(row.height / 5) * row.width * qty;
+  }
+
+  return Math.ceil(row.height / 4) * row.width * qty - sharedSavingsForGroup(row, qty);
+}
+
+function canUseMulti50(row, qty) {
+  if (isEightByEightMulti50(row)) return qty >= 5 && qty <= 10;
+  if (isTwelveByTwelveMulti50(row) && row.height === 12) {
+    return qty >= 3 && qty <= 4;
+  }
+  return false;
+}
+
+function canUseMulti62(row, qty) {
+  if (!(isTenFootMulti62(row) || isFifteenFootMulti62(row))) return false;
+  return qty >= 3 && qty <= 6;
+}
+
+function makeGroupOption(row, family, qty, intentPenalty = 0) {
   const kit = kitById(family);
-  const requiredLinearFeet = calculateFootageForFamily(materialMath, family);
-  const item =
-    family === "custom"
-      ? null
-      : {
-          ...kit,
-          qty: 1
-        };
+  const area = row.perDoorArea * qty;
+  const requiredLinearFeet = groupFootage(row, family, qty);
 
   return {
-    family,
-    label: kit.label,
+    coveredDoors: qty,
+    items: [
+      {
+        family,
+        label: kit.label,
+        quantity: 1
+      }
+    ],
     estimatedPrice: kit.price,
+    kitCount: 1,
+    spareCapacity: Math.max(0, kit.coverageSqft - area),
+    spareLinearFeet:
+      kit.linearFeet === null ? null : kit.linearFeet - requiredLinearFeet,
     requiredLinearFeet,
     totalLinearFeet: kit.linearFeet,
-    spareLinearFeet:
-      kit.linearFeet === null || requiredLinearFeet === null
-        ? null
-        : kit.linearFeet - requiredLinearFeet,
-    coverageSqft: kit.coverageSqft,
     tapeRolls: kit.tapeRolls,
     seamTapeRolls: kit.seamTapeRolls,
-    containsMultiDoor: Boolean(kit.multiDoor),
-    containsMulti62: family === "multi62",
-    items: item ? [item] : [],
-    reasoning: buildExplanation(family, classification, materialMath)
+    intentPenalty,
+    complexity: family.startsWith("multi") ? 0 : 1,
+    assignments: [
+      {
+        family,
+        label: kit.label,
+        qty,
+        width: row.width,
+        height: row.height,
+        requiredLinearFeet,
+        area
+      }
+    ]
   };
 }
 
-function compareMultiDoorFamilies(a, b) {
-  if (a.family === b.family) return 0;
-  const aClean = a.requiredLinearFeet <= a.totalLinearFeet;
-  const bClean = b.requiredLinearFeet <= b.totalLinearFeet;
-  if (aClean !== bClean) return aClean ? -1 : 1;
+function groupOptionsForRow(row) {
+  if (!singleDoorFitsStandardSystem(row)) return [];
 
-  const aWaste = a.totalLinearFeet - a.requiredLinearFeet;
-  const bWaste = b.totalLinearFeet - b.requiredLinearFeet;
-  if (aWaste !== bWaste) return aWaste - bWaste;
+  const options = [];
+  const preference = preferredMultiFamily(row);
+  const nonPreferredPenalty = preference ? 100 : 0;
 
+  for (let qty = 1; qty <= row.qty; qty += 1) {
+    if (qty === 1 && row.width <= 12 && row.height <= 12 && row.perDoorArea <= 150) {
+      options.push(makeGroupOption(row, "single", qty, nonPreferredPenalty));
+    }
+
+    if (
+      (qty === 2 && row.width <= 10 && row.height <= 10) ||
+      (qty === 1 && row.perDoorArea <= 205)
+    ) {
+      options.push(makeGroupOption(row, "double", qty, nonPreferredPenalty));
+    }
+
+    if (row.perDoorArea * qty <= 295) {
+      const penalty = preference ? nonPreferredPenalty : row.perDoorArea <= 150 && qty === 1 ? 8 : 0;
+      options.push(makeGroupOption(row, "oversized", qty, penalty));
+    }
+
+    if (canUseMulti50(row, qty)) {
+      options.push(makeGroupOption(row, "multi50", qty, preference === "multi50" ? 0 : 5));
+    }
+
+    if (canUseMulti62(row, qty)) {
+      options.push(makeGroupOption(row, "multi62", qty, preference === "multi62" ? 0 : 5));
+    }
+  }
+
+  return options;
+}
+
+function mergeItems(items) {
+  const merged = new Map();
+
+  for (const item of items) {
+    const existing = merged.get(item.family);
+    if (existing) {
+      existing.quantity += item.quantity;
+    } else {
+      merged.set(item.family, { ...item });
+    }
+  }
+
+  return [...merged.values()].sort((a, b) => {
+    const order = ["single", "double", "oversized", "multi50", "multi62", "custom"];
+    return order.indexOf(a.family) - order.indexOf(b.family);
+  });
+}
+
+function combinePlanParts(parts) {
+  const items = mergeItems(parts.flatMap((part) => part.items));
+  const requiredLinearFeet = parts.reduce(
+    (sum, part) => sum + (part.requiredLinearFeet || 0),
+    0
+  );
+  const totalLinearFeet = parts.every((part) => part.totalLinearFeet !== null)
+    ? parts.reduce((sum, part) => sum + part.totalLinearFeet, 0)
+    : null;
+
+  return {
+    family: items.length === 1 && items[0].quantity === 1 ? items[0].family : "bundle",
+    label: planLabel(items),
+    items,
+    estimatedPrice: parts.every((part) => part.estimatedPrice !== null)
+      ? parts.reduce((sum, part) => sum + part.estimatedPrice, 0)
+      : null,
+    requiredLinearFeet,
+    totalLinearFeet,
+    spareLinearFeet:
+      totalLinearFeet === null ? null : totalLinearFeet - requiredLinearFeet,
+    spareCapacity: parts.reduce((sum, part) => sum + part.spareCapacity, 0),
+    kitCount: parts.reduce((sum, part) => sum + part.kitCount, 0),
+    tapeRolls: parts.reduce((sum, part) => sum + part.tapeRolls, 0),
+    seamTapeRolls: parts.reduce((sum, part) => sum + part.seamTapeRolls, 0),
+    intentPenalty: parts.reduce((sum, part) => sum + part.intentPenalty, 0),
+    complexity: new Set(items.map((item) => item.family)).size,
+    assignments: parts.flatMap((part) => part.assignments)
+  };
+}
+
+function comparePlans(a, b) {
+  if (a.intentPenalty !== b.intentPenalty) return a.intentPenalty - b.intentPenalty;
+  if (a.kitCount !== b.kitCount) return a.kitCount - b.kitCount;
+  if (a.spareCapacity !== b.spareCapacity) return a.spareCapacity - b.spareCapacity;
+  if (a.spareLinearFeet !== b.spareLinearFeet) {
+    return a.spareLinearFeet - b.spareLinearFeet;
+  }
   if (a.estimatedPrice !== b.estimatedPrice) {
     return a.estimatedPrice - b.estimatedPrice;
   }
-
-  return a.family === "multi62" ? -1 : 1;
+  return a.complexity - b.complexity;
 }
 
-export function choosePrimaryRecommendation(eligibleResults, classification) {
-  if (eligibleResults.length === 0) return null;
+function rowPlans(row) {
+  const options = groupOptionsForRow(row);
+  if (options.length === 0) return [];
 
-  if (classification.totalDoorCount === 1) {
-    const priority = ["single", "double", "oversized", "custom"];
-    return eligibleResults.sort(
-      (a, b) => priority.indexOf(a.family) - priority.indexOf(b.family)
-    )[0];
-  }
-
-  if (classification.totalDoorCount === 2) {
-    const priority = ["double", "oversized", "custom"];
-    return eligibleResults.sort(
-      (a, b) => priority.indexOf(a.family) - priority.indexOf(b.family)
-    )[0];
-  }
-
-  const multiDoorResults = eligibleResults.filter((result) =>
-    ["multi50", "multi62"].includes(result.family)
-  );
-  if (multiDoorResults.length > 0) {
-    return multiDoorResults.sort(compareMultiDoorFamilies)[0];
-  }
-
-  return eligibleResults.find((result) => result.family === "custom");
-}
-
-export function buildExplanation(family, classification, materialMath) {
-  if (family === "single") {
-    return [
-      "This is one door within the Single kit limit of 12' x 12' and 150 sq ft, so the Single Garage Door Kit is the correct standard kit."
-    ];
-  }
-
-  if (family === "double" && classification.totalDoorCount === 1) {
-    return [
-      "This is one larger door over the Single kit size, but it is under the 205 sq ft Double kit limit, so the Double Garage Door Kit is the correct standard kit."
-    ];
-  }
-
-  if (family === "double") {
-    return [
-      "This two-door layout fits the Double kit family before any multi-door options are considered."
-    ];
-  }
-
-  if (family === "oversized" && classification.totalDoorCount === 1) {
-    return [
-      "This is a single large door under the 295 sq ft limit, so the Oversized Garage Door Kit is the correct standard kit."
-    ];
-  }
-
-  if (family === "oversized") {
-    return [
-      "This layout is above the Double kit range but stays within the 295 sq ft Oversized kit limit, so the Oversized Garage Door Kit is the correct standard kit."
-    ];
-  }
-
-  if (family === "multi62") {
-    return [
-      "This layout is a true multi-door use case with doors that align with the 62\" multi-door kit rules.",
-      "The calculator compares multi-door layouts after confirming the request belongs in the multi-door product family."
-    ];
-  }
-
-  if (family === "multi50") {
-    return [
-      "This layout is a true multi-door use case that matches the 50\" multi-door kit assumptions.",
-      "Multi-door kits are considered only after door count and size rules confirm the product family is valid."
-    ];
-  }
-
-  return [
-    "This layout exceeds the standard pre-made kit limits, so a custom larger-roll setup is recommended.",
-    `${materialMath.footage50}' of 50\" planning footage and ${materialMath.footage62}' of 62\" planning footage were calculated for quoting.`
+  const plansByCount = Array.from({ length: row.qty + 1 }, () => []);
+  plansByCount[0] = [
+    {
+      items: [],
+      estimatedPrice: 0,
+      kitCount: 0,
+      spareCapacity: 0,
+      spareLinearFeet: 0,
+      requiredLinearFeet: 0,
+      totalLinearFeet: 0,
+      tapeRolls: 0,
+      seamTapeRolls: 0,
+      intentPenalty: 0,
+      complexity: 0,
+      assignments: []
+    }
   ];
+
+  for (let count = 0; count <= row.qty; count += 1) {
+    for (const current of plansByCount[count]) {
+      for (const option of options) {
+        const nextCount = count + option.coveredDoors;
+        if (nextCount > row.qty) continue;
+
+        const next = combinePlanParts([current, option]);
+        plansByCount[nextCount].push(next);
+        plansByCount[nextCount].sort(comparePlans);
+        plansByCount[nextCount] = plansByCount[nextCount].slice(0, 24);
+      }
+    }
+  }
+
+  return plansByCount[row.qty].sort(comparePlans).slice(0, 12);
 }
 
-export function recommendKits(rows) {
-  const classification = classifyRequest(rows);
-  const materialMath = calculateMaterialMath(rows);
-  const eligibleFamilies = getEligibleFamilies(classification);
-  const eligibleResults = eligibleFamilies.map((family) =>
-    makeRecommendation(family, classification, materialMath)
-  );
-  const primaryRecommendation = choosePrimaryRecommendation(
-    eligibleResults,
-    classification
-  );
-  const alternativeRecommendations = eligibleResults.filter(
-    (result) => result.family !== primaryRecommendation?.family
-  );
-  const warnings = [];
+function combineRowPlanSets(rowPlanSets) {
+  let combined = [
+    {
+      items: [],
+      estimatedPrice: 0,
+      kitCount: 0,
+      spareCapacity: 0,
+      spareLinearFeet: 0,
+      requiredLinearFeet: 0,
+      totalLinearFeet: 0,
+      tapeRolls: 0,
+      seamTapeRolls: 0,
+      intentPenalty: 0,
+      complexity: 0,
+      assignments: []
+    }
+  ];
 
-  if (primaryRecommendation?.family === "custom") {
-    warnings.push(
-      "Standard kit limits are exceeded. Use the footage math for a custom roll or manual quote."
+  for (const plans of rowPlanSets) {
+    const next = [];
+    for (const base of combined) {
+      for (const plan of plans) {
+        next.push(combinePlanParts([base, plan]));
+      }
+    }
+    combined = next.sort(comparePlans).slice(0, 24);
+  }
+
+  return combined.sort(comparePlans);
+}
+
+function customPlan(materialMath) {
+  return {
+    family: "custom",
+    label: CUSTOM_RECOMMENDATION.label,
+    items: [],
+    estimatedPrice: null,
+    requiredLinearFeet: null,
+    totalLinearFeet: null,
+    spareLinearFeet: null,
+    spareCapacity: null,
+    kitCount: 0,
+    tapeRolls: 0,
+    seamTapeRolls: 0,
+    intentPenalty: 1000,
+    complexity: 0,
+    assignments: [],
+    reasoning: [
+      "This layout includes at least one door outside the standard BlueTex garage door kit coverage logic.",
+      `${formatFeet(materialMath.footage50)} of 50\" planning footage and ${formatFeet(materialMath.footage62)} of 62\" planning footage were calculated for custom quoting.`
+    ]
+  };
+}
+
+export function buildCandidatePlans(rows) {
+  const classification = classifyRequest(rows);
+  if (classification.totalDoorCount === 0) return [];
+
+  const rowPlanSets = classification.mergedRows.map(rowPlans);
+  if (rowPlanSets.some((plans) => plans.length === 0)) return [];
+
+  return combineRowPlanSets(rowPlanSets).map(addPlanExplanation);
+}
+
+function addPlanExplanation(plan) {
+  const multiItems = plan.items.filter((item) => item.family.startsWith("multi"));
+  const hasBundle = plan.items.length > 1 || plan.items.some((item) => item.quantity > 1);
+  const reasoning = [];
+
+  if (multiItems.length > 0) {
+    reasoning.push(
+      `This request is best covered by ${planLabel(multiItems)} because those kits match the intended multi-door layout before smaller kits are stacked.`
     );
   }
 
-  if (
-    primaryRecommendation?.spareLinearFeet !== null &&
-    primaryRecommendation?.spareLinearFeet < 0
-  ) {
+  if (hasBundle) {
+    reasoning.push(
+      "This request exceeds a single standard kit, but it is still covered by a combination of standard BlueTex garage door kits."
+    );
+  } else {
+    reasoning.push(
+      "This request fits one standard BlueTex garage door kit, so no custom roll is needed."
+    );
+  }
+
+  reasoning.push(
+    "A custom roll recommendation is only shown when a standard kit combination does not fit the entered doors."
+  );
+
+  return {
+    ...plan,
+    reasoning
+  };
+}
+
+export function recommendKits(rows) {
+  const materialMath = calculateMaterialMath(rows);
+  const candidatePlans = buildCandidatePlans(rows);
+  const primaryPlan =
+    candidatePlans.length > 0 ? candidatePlans[0] : customPlan(materialMath);
+  const alternatives = candidatePlans.slice(1, 4);
+  const warnings = [];
+
+  if (primaryPlan.family === "custom") {
+    warnings.push(
+      "Standard kit combinations do not fit this request. Use the footage math for a custom roll or manual quote."
+    );
+  }
+
+  if (primaryPlan.spareLinearFeet !== null && primaryPlan.spareLinearFeet < 0) {
     warnings.push(
       "This recommendation follows BlueTex kit coverage limits first. Check final strip layout for unusually wide doors."
     );
   }
 
   return {
-    primaryRecommendation,
-    alternativeRecommendations,
+    primaryPlan,
+    primaryRecommendation: primaryPlan,
+    alternatives,
+    alternativeRecommendations: alternatives,
     materialMath,
-    explanation: primaryRecommendation?.reasoning || [],
+    explanation: primaryPlan.reasoning || [],
     warnings
   };
 }
 
 export function calculateTapePlan(doors, recommendation) {
-  if (!recommendation?.primaryRecommendation) return [];
+  if (!recommendation?.primaryPlan) return [];
 
   const spacingInches = 18;
   return doors.map((door) => {
@@ -490,8 +621,7 @@ export function calculate(rows) {
     (sum, door) => sum + door.tighterTapeFeet,
     0
   );
-  const tapeFeetIncluded =
-    (recommendation.primaryRecommendation?.tapeRolls || 0) * 180;
+  const tapeFeetIncluded = (recommendation.primaryPlan?.tapeRolls || 0) * 180;
 
   return {
     rows: normalizedRows,

@@ -57,7 +57,7 @@ function kitList(recommendation) {
   }
 
   return recommendation.items
-    .map((item) => `<li>${item.qty}x ${item.name}</li>`)
+    .map((item) => `<li>${item.quantity}x ${item.label}</li>`)
     .join("");
 }
 
@@ -74,14 +74,14 @@ function renderEmptyState() {
 function renderResults(model) {
   if (
     !model.materialMath.totalDoorCount ||
-    !model.recommendation?.primaryRecommendation
+    !model.recommendation?.primaryPlan
   ) {
     renderEmptyState();
     return;
   }
 
-  const best = model.recommendation.primaryRecommendation;
-  const alternatives = model.recommendation.alternativeRecommendations;
+  const best = model.recommendation.primaryPlan;
+  const alternatives = model.recommendation.alternatives;
   const priceText =
     best.estimatedPrice === null
       ? "Contact for custom sizing"
@@ -99,7 +99,7 @@ function renderResults(model) {
 
   summary.innerHTML = `
     <div class="metric primary">
-      <span>Recommended kit</span>
+      <span>Recommended kit plan</span>
       <strong>${best.label}</strong>
       <small>${priceText}</small>
     </div>
