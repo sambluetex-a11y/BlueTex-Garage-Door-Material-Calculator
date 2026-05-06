@@ -1,0 +1,10 @@
+{
+  "name": "bluetex-garage-door-material-calculator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/calculator.test.mjs",
+    "serve": "python3 -m http.server 5173"
+  }
+}

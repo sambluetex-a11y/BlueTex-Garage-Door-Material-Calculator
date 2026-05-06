@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BlueTex Roll-Up Garage Door Material Calculator</title>
+    <meta name="description" content="Calculate roll-up garage door insulation linear footage, kit size, and double-sided tape strip guidance for BlueTex kits.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="https://bluetexinsulation.com/" aria-label="BlueTex Insulation">
+        <span class="brand-mark">BT</span>
+        <span>BlueTex™</span>
+      </a>
+      <nav aria-label="Helpful links">
+        <a href="https://bluetexinsulation.com/blogs/articles/how-to-measure-your-roll-up-garage-door-for-insulation">Measuring Guide</a>
+        <a href="https://bluetexinsulation.com/products/bluetex-2mm-pro-roll-up-garage-door-kit">Roll-Up Kits</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Roll-up garage door calculator</p>
+          <h1>Measure by linear feet, not square feet.</h1>
+          <p>Enter up to three door sizes, add quantity, and get the kit size and tape layout that fits how BlueTex™ roll-up material is actually installed.</p>
+        </div>
+        <figure class="hero-media">
+          <img src="https://cdn.shopify.com/s/files/1/0013/9637/5601/files/bluetex_roll_up_garage_door_1_panel_insulated_600x600.png?v=1774030106" alt="Roll-up garage door insulated with BlueTex material">
+        </figure>
+      </section>
+
+      <section class="calculator-shell" aria-label="BlueTex roll-up garage door material calculator">
+        <div class="calculator-card">
+          <div class="card-heading">
+            <div>
+              <p class="eyebrow">Door dimensions</p>
+              <h2>Material Calculator</h2>
+            </div>
+            <button class="ghost-button" type="button" data-mode-toggle aria-pressed="false">Embed view</button>
+          </div>
+
+          <form data-calculator-form>
+            <div class="door-grid-labels" aria-hidden="true">
+              <span>Width</span>
+              <span>Height</span>
+              <span>Quantity</span>
+            </div>
+            <div data-rows></div>
+            <button class="secondary-button" type="button" data-add-row>Add another size</button>
+          </form>
+
+          <div class="helper-strip">
+            <strong>How the math works:</strong>
+            <span>Height ÷ 4 = horizontal runs. Runs × width × qty = linear feet. Eligible 2-foot top strips can be shared across paired doors.</span>
+          </div>
+        </div>
+
+        <div class="results-card" data-results>
+          <div class="summary-grid" data-summary></div>
+          <div class="details-stack" data-details></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>Need help checking an unusual door setup?</span>
+      <a href="tel:18005958772">1-800-595-8772</a>
+      <a href="https://bluetexinsulation.com/pages/contact-us">Contact BlueTex</a>
+    </footer>
+
+    <script type="module" src="src/app.js"></script>
+  </body>
+</html>
