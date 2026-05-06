@@ -15,11 +15,20 @@ A static, dependency-free calculator for BlueTex roll-up garage door insulation 
 ## Local Preview
 
 ```bash
+npm install
 npm test
-npm run serve
+npm run dev
 ```
 
-Then open `http://localhost:5173`.
+Then open the local URL Vite prints in the terminal.
+
+## Deploy to Vercel
+
+1. Push this repo to GitHub.
+2. In Vercel, choose **Add New Project** and import the GitHub repo.
+3. Let Vercel auto-detect Vite.
+4. Deploy with the default settings.
+5. Copy the live Vercel URL and share it.
 
 ## Embed Notes
 

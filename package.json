@@ -3,8 +3,17 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "test": "node tests/calculator.test.mjs",
     "serve": "python3 -m http.server 5173"
+  },
+  "devDependencies": {
+    "vite": "^8.0.10"
   }
 }
