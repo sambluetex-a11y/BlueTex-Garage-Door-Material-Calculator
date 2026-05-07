@@ -4,6 +4,7 @@ const form = document.querySelector("[data-calculator-form]");
 const result = document.querySelector("[data-results]");
 const summary = document.querySelector("[data-summary]");
 const details = document.querySelector("[data-details]");
+const tapeSummary = document.querySelector("[data-tape-summary]");
 const addRowButton = document.querySelector("[data-add-row]");
 const modeButton = document.querySelector("[data-mode-toggle]");
 const rowsContainer = document.querySelector("[data-rows]");
@@ -69,6 +70,45 @@ function renderEmptyState() {
     </div>
   `;
   details.innerHTML = "";
+  tapeSummary.innerHTML = "";
+}
+
+function shortFitNote(best, warnings) {
+  if (warnings.length) return warnings[0];
+  if (best.items.some((item) => item.family === "multi62")) {
+    return "62\" multi-door kit matched the entered 10' or 15' door height use case.";
+  }
+  if (best.items.some((item) => item.family === "multi50")) {
+    return "50\" multi-door kit matched the entered 8' or 12' door use case.";
+  }
+  return "Standard 50\" kit layout selected for these dimensions.";
+}
+
+function renderTapeSummary(model, tapeStatus) {
+  const tapeRows = model.rows
+    .map((row, index) => {
+      const plan = model.tapePlan.find((door) => door.groupIndex === index);
+      if (!plan) return "";
+      return `
+        <li>
+          <strong>${row.qty}x ${formatFeet(row.width)} W x ${formatFeet(row.height)} H</strong>
+          <span>${plan.strips} vertical strips per door, ${formatFeet(plan.tapeFeet * row.qty)} total</span>
+        </li>
+      `;
+    })
+    .join("");
+
+  tapeSummary.innerHTML = `
+    <section class="tape-card">
+      <div class="panel-heading">
+        <h2>Double-Sided Tape</h2>
+        ${tapeStatus}
+      </div>
+      <p>Tape is typically applied every 12" to 18" across the door width. This estimate uses 18" spacing as a practical planning number.</p>
+      <ul class="tape-list">${tapeRows}</ul>
+      <p class="tape-total">${formatFeet(model.tapeFeetNeeded)} total double-sided tape needed.</p>
+    </section>
+  `;
 }
 
 function renderResults(model) {
@@ -86,32 +126,42 @@ function renderResults(model) {
     best.estimatedPrice === null
       ? "Contact for custom sizing"
       : `${formatMoney(best.estimatedPrice)} estimated kit price`;
-  const spareText =
-    best.spareLinearFeet === null
-      ? "Use the footage below for custom quoting"
-      : best.spareLinearFeet >= 0
-        ? `${formatFeet(best.spareLinearFeet)} spare material in this recommendation`
-        : "Selected by product-family coverage limits";
   const tapeStatus =
     model.tapeShortfall > 0
       ? `<span class="status warn">Add tape recommended</span>`
       : `<span class="status ok">Included tape covers this layout</span>`;
+  const coverageText =
+    best.totalLinearFeet === null
+      ? "Custom footage needed"
+      : `${formatFeet(best.totalLinearFeet)} kit material`;
+  const requiredText =
+    best.requiredLinearFeet === null
+      ? "Use the custom footage below"
+      : `${formatFeet(best.requiredLinearFeet)} layout footage needed`;
+  const fitNote = shortFitNote(best, model.recommendation.warnings);
+
+  renderTapeSummary(model, tapeStatus);
 
   summary.innerHTML = `
     <div class="metric primary">
-      <span>Recommended kit plan</span>
+      <span>Best kit plan</span>
       <strong>${best.label}</strong>
       <small>${priceText}</small>
     </div>
     <div class="metric">
-      <span>Material layout footage</span>
-      <strong>${formatFeet(best.requiredLinearFeet)}</strong>
-      <small>${spareText}</small>
+      <span>Kit coverage</span>
+      <strong>${coverageText}</strong>
+      <small>${requiredText}</small>
     </div>
     <div class="metric">
-      <span>Door coverage</span>
+      <span>Tape guidance</span>
+      <strong>${formatFeet(model.tapeFeetNeeded)}</strong>
+      <small>${model.tapePlan[0]?.spacingInches || 18}" spacing estimate; ${model.tapeShortfall > 0 ? "add tape" : "included tape looks sufficient"}</small>
+    </div>
+    <div class="metric">
+      <span>Fit note</span>
       <strong>${model.materialMath.totalDoorCount} door${model.materialMath.totalDoorCount === 1 ? "" : "s"}</strong>
-      <small>${Math.round(model.materialMath.totalArea)} sq ft checked against kit limits first</small>
+      <small>${fitNote}</small>
     </div>
   `;
 
@@ -124,21 +174,6 @@ function renderResults(model) {
           <td>${formatFeet(row.footage50)}</td>
           <td>${row.runs62}</td>
           <td>${formatFeet(row.footage62)}</td>
-        </tr>
-      `;
-    })
-    .join("");
-
-  const tapeRows = model.rows
-    .map((row, index) => {
-      const plan = model.tapePlan.find((door) => door.groupIndex === index);
-      if (!plan) return "";
-      return `
-        <tr>
-          <td>${row.qty}x ${formatFeet(row.width)} W x ${formatFeet(row.height)} H</td>
-          <td>${plan.strips} vertical strips per door</td>
-          <td>${formatFeet(plan.tapeFeet)} per door</td>
-          <td>${formatFeet(plan.tapeFeet * row.qty)}</td>
         </tr>
       `;
     })
@@ -207,32 +242,6 @@ function renderResults(model) {
           <tbody>${doorRows}</tbody>
         </table>
       </div>
-    </section>
-
-    <section class="result-panel">
-      <div class="panel-heading">
-        <h2>Double-Sided Tape Plan</h2>
-        ${tapeStatus}
-      </div>
-      <p>Plan on vertical double-sided tape strips across each door at roughly 18" spacing, then tighten spacing where the installer wants more grab. The 12" spacing scenario would use about ${formatFeet(model.tighterTapeFeetNeeded)} total tape.</p>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Door size</th>
-              <th>Recommended strips</th>
-              <th>Tape per door</th>
-              <th>Total tape</th>
-            </tr>
-          </thead>
-          <tbody>${tapeRows}</tbody>
-        </table>
-      </div>
-      <p class="tape-total">Recommended layout: ${formatFeet(model.tapeFeetNeeded)} tape needed. ${
-        best.tapeRolls > 0
-          ? `Kit includes about ${formatFeet(model.tapeFeetIncluded)} across ${best.tapeRolls} roll${best.tapeRolls === 1 ? "" : "s"}.`
-          : "Tape should be quoted with the custom roll setup."
-      }</p>
     </section>
   `;
 }

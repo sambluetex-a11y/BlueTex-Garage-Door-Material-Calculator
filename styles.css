@@ -91,16 +91,11 @@ main {
 }
 
 .hero {
-  align-items: center;
-  display: grid;
-  gap: 40px;
-  grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
-  min-height: 360px;
-  padding: 16px 0 42px;
+  padding: 18px 0 28px;
 }
 
 .hero-copy {
-  max-width: 680px;
+  max-width: 760px;
 }
 
 .eyebrow {
@@ -120,7 +115,7 @@ h2 {
 }
 
 h1 {
-  font-size: clamp(38px, 6vw, 68px);
+  font-size: clamp(34px, 5vw, 52px);
   max-width: 760px;
 }
 
@@ -130,9 +125,9 @@ h2 {
 
 .hero p:not(.eyebrow) {
   color: var(--muted);
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1.5;
-  margin: 20px 0 0;
+  margin: 12px 0 0;
   max-width: 650px;
 }
 
@@ -161,7 +156,8 @@ h2 {
 
 .calculator-card,
 .results-card,
-.result-panel {
+.result-panel,
+.tape-card {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -294,7 +290,7 @@ button:focus {
 .summary-grid {
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .metric {
@@ -349,7 +345,8 @@ button:focus {
   padding: 18px;
 }
 
-.result-panel p {
+.result-panel p,
+.tape-card p {
   color: var(--muted);
   margin: 10px 0 0;
 }
@@ -357,6 +354,40 @@ button:focus {
 .result-panel ul {
   margin: 14px 0 0;
   padding-left: 22px;
+}
+
+.tape-card {
+  margin-top: 14px;
+  padding: 16px;
+}
+
+.tape-card h2 {
+  font-size: 20px;
+}
+
+.tape-list {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.tape-list li {
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 2px;
+  padding-top: 8px;
+}
+
+.tape-list strong {
+  line-height: 1.25;
+}
+
+.tape-list span {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.35;
 }
 
 .alternate {
