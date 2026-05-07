@@ -259,14 +259,6 @@ function singleDoorFitsStandardSystem(row) {
   return row.perDoorArea <= kitById("oversized").coverageSqft;
 }
 
-function isEightByEightMulti50(row) {
-  return row.width <= 8 && row.height <= 8;
-}
-
-function isTwelveByTwelveMulti50(row) {
-  return row.width <= 12 && row.height <= 12;
-}
-
 function isTenFootMulti62(row) {
   return row.width <= 10 && row.height === 10;
 }
@@ -284,11 +276,7 @@ function groupFootage(row, family, qty) {
 }
 
 function canUseMulti50(row, qty) {
-  if (isEightByEightMulti50(row)) return qty >= 5 && qty <= 10;
-  if (isTwelveByTwelveMulti50(row) && row.height === 12) {
-    return qty >= 3 && qty <= 4;
-  }
-  return false;
+  return qty >= 3 && qty <= 10 && singleDoorFitsStandardSystem(row);
 }
 
 function canUseMulti62(row, qty) {
@@ -424,14 +412,14 @@ function comparePlans(a, b) {
   if (a.estimatedPrice !== b.estimatedPrice) {
     return a.estimatedPrice - b.estimatedPrice;
   }
+  if (a.items.some((item) => item.family === "multi62") !== b.items.some((item) => item.family === "multi62")) {
+    return a.items.some((item) => item.family === "multi62") ? 1 : -1;
+  }
   if (a.spareLinearFeet !== b.spareLinearFeet) {
     return a.spareLinearFeet - b.spareLinearFeet;
   }
   if (a.spareCapacity !== b.spareCapacity) return a.spareCapacity - b.spareCapacity;
   if (a.kitCount !== b.kitCount) return a.kitCount - b.kitCount;
-  if (a.items.some((item) => item.family === "multi62") !== b.items.some((item) => item.family === "multi62")) {
-    return a.items.some((item) => item.family === "multi62") ? 1 : -1;
-  }
   return a.complexity - b.complexity;
 }
 
@@ -540,12 +528,14 @@ function canUseKitForDoors(family, doors) {
 
   if (family === "multi50") {
     return (
-      (qty >= 5 &&
-        qty <= 10 &&
-        everyDoor(doors, (door) => door.width <= 8 && door.height <= 8)) ||
-      (qty >= 3 &&
-        qty <= 4 &&
-        everyDoor(doors, (door) => door.width <= 12 && door.height === 12))
+      qty >= 3 &&
+      qty <= 10 &&
+      everyDoor(
+        doors,
+        (door) =>
+          door.squareFeet <= kitById("oversized").coverageSqft &&
+          door.linear50Max <= kitById("oversized").linearFeet
+      )
     );
   }
 
@@ -753,8 +743,8 @@ export function calculateTapePlan(doors, recommendation) {
 
   const spacingInches = 18;
   return doors.map((door) => {
-    const strips = Math.ceil((door.width * 12) / spacingInches) + 1;
-    const tighterStrips = Math.ceil((door.width * 12) / 12) + 1;
+    const strips = Math.ceil((door.width * 12) / spacingInches);
+    const tighterStrips = Math.ceil((door.width * 12) / 12);
     return {
       ...door,
       spacingInches,

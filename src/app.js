@@ -106,7 +106,11 @@ function renderTapeSummary(model, tapeStatus) {
       </div>
       <p>Tape is typically applied every 12" to 18" across the door width. This estimate uses 18" spacing as a practical planning number.</p>
       <ul class="tape-list">${tapeRows}</ul>
-      <p class="tape-total">${formatFeet(model.tapeFeetNeeded)} total double-sided tape needed.</p>
+      <p class="tape-total">${formatFeet(model.tapeFeetNeeded)} total double-sided tape needed. ${
+        model.recommendation.primaryPlan.tapeRolls > 0
+          ? `Recommended kits include about ${formatFeet(model.tapeFeetIncluded)}.`
+          : "Tape should be quoted with the custom setup."
+      }</p>
     </section>
   `;
 }

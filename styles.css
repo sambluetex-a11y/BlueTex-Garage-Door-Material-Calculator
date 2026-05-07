@@ -87,15 +87,7 @@ nav {
 main {
   margin: 0 auto;
   max-width: 1180px;
-  padding: 34px 20px 0;
-}
-
-.hero {
-  padding: 18px 0 28px;
-}
-
-.hero-copy {
-  max-width: 760px;
+  padding: 24px 20px 0;
 }
 
 .eyebrow {
@@ -123,28 +115,12 @@ h2 {
   font-size: 24px;
 }
 
-.hero p:not(.eyebrow) {
+.calculator-note {
   color: var(--muted);
-  font-size: 18px;
-  line-height: 1.5;
-  margin: 12px 0 0;
-  max-width: 650px;
-}
-
-.hero-media {
-  aspect-ratio: 1 / 0.78;
-  background: var(--shade-strong);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  margin: 0;
-  overflow: hidden;
-}
-
-.hero-media img {
-  display: block;
-  height: 100%;
-  object-fit: cover;
-  width: 100%;
+  font-size: 14px;
+  line-height: 1.4;
+  margin: 6px 0 0;
+  max-width: 360px;
 }
 
 .calculator-shell {
@@ -502,8 +478,7 @@ tbody tr:last-child td {
 }
 
 .embed-mode .site-header,
-.embed-mode .site-footer,
-.embed-mode .hero {
+.embed-mode .site-footer {
   display: none;
 }
 
@@ -517,7 +492,6 @@ tbody tr:last-child td {
 }
 
 @media (max-width: 920px) {
-  .hero,
   .calculator-shell,
   .embed-mode .calculator-shell {
     grid-template-columns: 1fr;
@@ -547,10 +521,6 @@ tbody tr:last-child td {
 
   h1 {
     font-size: 38px;
-  }
-
-  .hero p:not(.eyebrow) {
-    font-size: 17px;
   }
 
   .door-grid-labels {
