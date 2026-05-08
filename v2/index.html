@@ -3,254 +3,415 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BlueTex Garage Door Insulation — Material Calculator</title>
+<title>Garage Door Insulation Calculator — BlueTex™</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
+/* ── Reset ── */
 *{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --orange:#FF6200;--orange-d:#D95200;--navy:#1E293B;--slate:#334155;
-  --ink:#111827;--muted:#6b7280;--line:#e5e7eb;--line-m:#d1d5db;
-  --bg:#f8f9fa;--card:#fff;--shade:#F1F5F9;
-  --green:#15803D;--red:#DC2626;--warn:#92400E;
-  --r:8px;--rs:6px
-}
-body{font-family:Lato,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.5}
-a{color:var(--slate);text-decoration:none}
+body{font-family:Lato,sans-serif;background:#fafafa;color:#1b1b1b;font-size:16px;line-height:1.6}
+img{max-width:100%;display:block}
+a{color:#0011a7;text-decoration:none}
 a:hover{text-decoration:underline}
 button,input{font-family:inherit;font-size:inherit}
 
-/* Layout */
-.wrap{max-width:660px;margin:0 auto;padding:0 16px 48px}
+/* ── Site Header ── */
+.site-header{background:#fff;border-bottom:1px solid #e6e6e7;padding:0 max(20px,calc((100vw - 1100px)/2));display:flex;align-items:center;justify-content:space-between;height:60px}
+.brand{display:flex;align-items:center;gap:10px;color:#1b1b1b;font-weight:900}
+.brand img{height:36px;width:auto}
+.site-nav{display:flex;gap:22px;font-size:14px}
+.site-nav a{color:#535254}
+.site-nav a:hover{color:#0011a7;text-decoration:none}
 
-/* Header */
-.site-hdr{padding:16px 0 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line);margin-bottom:20px}
-.site-hdr img{height:36px;width:auto;display:block}
-.hdr-text p{font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 1px}
-.hdr-text h1{font-size:17px;font-weight:900;color:var(--ink);margin:0;line-height:1.2}
-.hdr-text small{font-size:11px;color:var(--muted)}
+/* ── Page intro ── */
+.page-intro{padding:28px max(20px,calc((100vw - 760px)/2)) 0;border-bottom:1px solid #e6e6e7;margin-bottom:0}
+.page-intro-inner{max-width:720px;padding-bottom:22px}
+.page-intro-inner p.eyebrow{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#0011a7;margin-bottom:6px}
+.page-intro-inner h1{font-size:28px;font-weight:900;color:#1b1b1b;line-height:1.2;margin-bottom:8px}
+.page-intro-inner p.lead{font-size:16px;color:#535254;max-width:600px}
 
-/* Section cards */
-.sec{background:var(--card);border:1.5px solid var(--line-m);border-radius:var(--r);padding:.65rem .8rem;margin-bottom:.45rem}
-.sec-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.sec-head.no-mb{margin-bottom:0}
-.snum{width:22px;height:22px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;flex-shrink:0}
-.stitle{font-size:15px;font-weight:900;color:var(--ink);margin:0;flex:1}
-.ssub{font-size:12px;color:var(--muted);margin:0}
+/* ── Wrap ── */
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
 
-/* Door entry */
-.entry-row{display:grid;grid-template-columns:1fr 1fr 64px auto;gap:7px;align-items:end;margin-bottom:8px}
-.fl label{display:block;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
-.fl input{width:100%;padding:7px 9px;border:1.5px solid var(--line-m);border-radius:var(--rs);background:#fff;color:var(--ink);font-size:14px}
-.fl input:focus{outline:none;border-color:var(--slate)}
-.add-btn{padding:7px 14px;background:var(--slate);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap}
-.add-btn:hover{background:var(--navy)}
+/* ── Steps ── */
+.step-section{border-top:1px solid #e6e6e7;padding:28px 0}
+.step-hdr{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.step-hdr.with-action{justify-content:space-between}
+.step-badge{width:28px;height:28px;border-radius:50%;background:#0011a7;color:#fff;font-size:13px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-title{font-size:19px;font-weight:900;color:#1b1b1b}
+.step-sub{font-size:14px;color:#535254;font-weight:400;margin-left:2px}
 
-/* Door chips */
-.door-chips{display:flex;flex-direction:column;gap:4px;margin-bottom:6px}
-.chip{display:flex;align-items:center;gap:7px;padding:5px 9px;background:var(--shade);border:.5px solid var(--line-m);border-radius:5px;font-size:12px}
-.chip .chip-x{margin-left:auto;background:none;border:none;cursor:pointer;font-size:14px;color:var(--muted);padding:0;line-height:1}
-.chip .chip-x:hover{color:var(--red)}
-.dstatus{display:flex;align-items:center;gap:6px;font-size:12px;padding:2px 0;color:var(--muted)}
-.dstatus.has-doors{color:var(--green);font-weight:700}
-.dstatus.warn-none{color:var(--red);font-weight:700}
+/* ── Entry form ── */
+.entry-grid{display:grid;grid-template-columns:1fr 1fr 72px auto;gap:8px;align-items:end;margin-bottom:10px}
+.fl label{display:block;font-size:12px;font-weight:700;color:#535254;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.fl input{width:100%;padding:8px 10px;border:1px solid #d6d4da;border-radius:4px;background:#fff;color:#1b1b1b;font-size:15px}
+.fl input:focus{outline:none;border-color:#0011a7;box-shadow:0 0 0 2px rgba(0,17,167,.1)}
+.btn-add{padding:8px 16px;background:#0011a7;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:14px;font-weight:700;white-space:nowrap;height:40px}
+.btn-add:hover{background:#002f6c}
+.hint{font-size:12px;color:#878688;margin-top:4px;margin-bottom:2px}
 
-/* Calc button */
-#calc-btn{width:100%;padding:12px;font-size:15px;font-weight:900;background:var(--orange);color:#fff;border:none;border-radius:var(--r);cursor:pointer;margin:.5rem 0 .6rem;letter-spacing:.01em}
-#calc-btn:hover{background:var(--orange-d)}
-#calc-btn:disabled{opacity:.55;cursor:not-allowed}
+/* ── Door chips ── */
+.door-chips{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.chip{display:flex;align-items:center;gap:8px;padding:7px 10px;background:#fff;border:1px solid #e6e6e7;border-radius:4px;font-size:14px}
+.chip-icon{color:#0011a7;font-size:15px;flex-shrink:0}
+.chip-label{flex:1;color:#1b1b1b}
+.chip-sub{font-size:12px;color:#878688;margin-left:4px}
+.chip-rm{background:none;border:none;cursor:pointer;color:#b0afb3;font-size:16px;padding:0;line-height:1;margin-left:auto}
+.chip-rm:hover{color:#3b3a3d}
 
-/* Recommendation card */
-.kit-card{background:var(--slate);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px;color:#fff}
-.kit-eyebrow{font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-bottom:4px}
-.kit-name{font-size:21px;font-weight:900;line-height:1.2;margin-bottom:5px}
-.kit-why{font-size:13px;color:rgba(255,255,255,.8);line-height:1.4;margin-bottom:10px}
-.kit-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.stat{background:rgba(255,255,255,.1);border-radius:5px;padding:7px 8px;text-align:center}
-.stat-val{display:block;font-size:17px;font-weight:900;line-height:1}
-.stat-lbl{display:block;font-size:10px;color:rgba(255,255,255,.65);margin-top:2px;line-height:1.2}
+/* ── Door status bar ── */
+.door-status{display:flex;align-items:center;gap:6px;font-size:13px;color:#535254;padding:6px 0;margin-bottom:16px}
+.door-status.ok{color:#1c6b3c;font-weight:700}
+.door-status.warn{color:#9b3d00;font-weight:700}
 
-/* Alternatives */
-.alts{font-size:12px;color:var(--muted);padding:6px 0 0;border-top:.5px solid var(--line);margin-top:8px}
-.alts strong{color:var(--ink)}
-.warn-box{background:#fff8f0;border:1px solid #fcd5a5;border-radius:var(--rs);padding:8px 10px;font-size:12px;color:var(--warn);margin-top:8px}
+/* ── Primary button ── */
+.btn-primary{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;font-size:16px;font-weight:900;background:#0011a7;color:#fff;border:none;border-radius:4px;cursor:pointer;letter-spacing:.01em}
+.btn-primary:hover{background:#002f6c}
+.btn-primary:disabled{background:#d6d4da;color:#878688;cursor:not-allowed}
 
-/* Install steps */
-.install-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.step{background:var(--shade);border:1px solid var(--line);border-radius:var(--rs);padding:10px 9px;text-align:center}
-.step-num{width:20px;height:20px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;margin:0 auto 7px}
-.step-icon{font-size:22px;color:var(--slate);margin-bottom:6px}
-.step-title{font-size:12px;font-weight:900;color:var(--ink);margin-bottom:3px;line-height:1.2}
-.step-desc{font-size:11px;color:var(--muted);line-height:1.35}
+/* ── Step placeholder (empty state) ── */
+.step-placeholder{background:#fff;border:1px dashed #d6d4da;border-radius:4px;padding:28px 20px;text-align:center;color:#878688}
+.step-placeholder i{font-size:28px;display:block;margin-bottom:8px;opacity:.45}
+.step-placeholder p{font-size:14px;line-height:1.5}
+.step-placeholder strong{color:#535254}
 
-/* Materials list */
-.mat-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:var(--rs);background:var(--shade);border:.5px solid var(--line);margin-bottom:6px}
-.mat-thumb{width:40px;height:40px;border-radius:5px;background:#dde2ec;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:.5px solid #c5cbd8;font-size:18px;color:#8B95A8}
+/* ── Recommendation card ── */
+.rec-card{background:#0011a7;border-radius:4px;padding:18px 20px;color:#fff;margin-bottom:14px}
+.rec-eyebrow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.6);margin-bottom:6px}
+.rec-name{font-size:22px;font-weight:900;line-height:1.2;margin-bottom:6px}
+.rec-why{font-size:14px;color:rgba(255,255,255,.8);line-height:1.5;margin-bottom:14px}
+.rec-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.rec-stat{background:rgba(255,255,255,.1);border-radius:3px;padding:8px 10px;text-align:center}
+.rec-stat-val{display:block;font-size:18px;font-weight:900;line-height:1}
+.rec-stat-lbl{display:block;font-size:11px;color:rgba(255,255,255,.6);margin-top:3px}
+.rec-alts{font-size:13px;color:#535254;padding:10px 0 4px;border-top:1px solid #e6e6e7;margin-top:10px}
+.rec-alts strong{color:#1b1b1b}
+.warn-box{background:#fffbf5;border:1px solid #f5d78e;border-radius:4px;padding:10px 12px;font-size:13px;color:#9b3d00;margin-top:10px}
+
+/* ── Install section ── */
+.print-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;background:#fff;border:1px solid #d6d4da;border-radius:4px;font-size:13px;font-weight:700;color:#1b1b1b;cursor:pointer;white-space:nowrap}
+.print-btn:hover{background:#fafafa;border-color:#1b1b1b}
+.print-btn:disabled{opacity:.4;cursor:not-allowed}
+.print-btn i{font-size:15px}
+
+.diagram-cards{display:flex;flex-direction:column;gap:18px;margin-bottom:24px}
+.diagram-card{background:#fff;border:1px solid #e6e6e7;border-radius:4px;overflow:hidden}
+.diagram-card-hdr{background:#fafafa;border-bottom:1px solid #e6e6e7;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.diagram-card-hdr h3{font-size:15px;font-weight:700;color:#1b1b1b;margin:0}
+.diagram-stats{display:flex;gap:14px;flex-wrap:wrap}
+.dstat{font-size:13px;color:#535254}
+.dstat strong{color:#1b1b1b}
+.diagram-svg-wrap{padding:16px 12px 8px}
+.diagram-legend{display:flex;gap:16px;flex-wrap:wrap;padding:0 12px 12px;font-size:12px;color:#535254;align-items:center}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-swatch-strip{width:20px;height:12px;background:#E0E7FF;border:1px solid #0011a7;border-radius:2px;opacity:.7}
+.legend-swatch-tape{width:2px;height:14px;background:#0011a7;border-radius:1px;opacity:.6;margin:0 5px}
+.legend-swatch-tape-box{display:flex;align-items:center;gap:2px}
+
+/* ── Install steps (always visible) ── */
+.install-steps-list{display:grid;gap:12px}
+.istep{display:flex;gap:14px;padding:12px;background:#fff;border:1px solid #e6e6e7;border-radius:4px}
+.istep-num{width:28px;height:28px;border-radius:50%;background:#0011a7;color:#fff;font-size:13px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.istep-body{flex:1}
+.istep-title{font-size:15px;font-weight:700;color:#1b1b1b;margin-bottom:3px}
+.istep-desc{font-size:14px;color:#535254;line-height:1.5}
+.istep-tip{font-size:13px;color:#0011a7;margin-top:4px;font-style:italic}
+
+/* ── Materials list ── */
+.mat-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff;border:1px solid #e6e6e7;border-radius:4px;margin-bottom:6px}
+.mat-icon{width:42px;height:42px;border-radius:4px;background:#fafafa;border:1px solid #e6e6e7;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;color:#535254}
 .mat-info{flex:1;min-width:0}
-.mat-name{font-size:14px;font-weight:900;color:var(--ink);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mat-sub{font-size:11px;color:var(--muted);margin-top:1px}
-.mat-price{font-size:11px;color:var(--muted);margin-top:2px}
-.mat-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
-.qty-inp{width:64px;padding:5px 4px;font-size:13px;font-weight:700;text-align:center;border:1.5px solid var(--line-m);border-radius:var(--rs);background:#fff;color:var(--ink)}
-.qty-inp:focus{outline:none;border-color:var(--slate)}
-.atc-btn{font-size:12px;font-weight:700;padding:6px 11px;border:none;border-radius:5px;cursor:pointer;background:var(--orange);color:#fff;white-space:nowrap}
-.atc-btn:hover{background:var(--orange-d)}
-.atc-btn.done{background:#085041}
+.mat-name{font-size:15px;font-weight:700;color:#1b1b1b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mat-sub{font-size:12px;color:#878688;margin-top:2px}
+.mat-price{font-size:12px;color:#535254;margin-top:2px}
+.mat-right{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.qty-inp{width:62px;padding:6px 4px;font-size:14px;font-weight:700;text-align:center;border:1px solid #d6d4da;border-radius:4px;background:#fff;color:#1b1b1b}
+.qty-inp:focus{outline:none;border-color:#0011a7}
+.atc-btn{font-size:13px;font-weight:700;padding:7px 12px;border:1px solid #0011a7;border-radius:4px;cursor:pointer;background:#fff;color:#0011a7;white-space:nowrap}
+.atc-btn:hover{background:#0011a7;color:#fff}
+.atc-btn.done{background:#1c6b3c;border-color:#1c6b3c;color:#fff}
 
-/* Cart footer */
-.cart-footer{background:#fff;border:2px solid var(--slate);border-radius:var(--r);overflow:hidden;margin-top:4px}
-.cart-hdr{background:var(--slate);padding:9px 14px;display:flex;justify-content:space-between;align-items:center}
-.cart-hdr p{font-size:14px;font-weight:900;color:#fff;margin:0}
-.cart-hdr span{font-size:13px;font-weight:700;color:rgba(255,255,255,.75)}
-.add-all-btn{width:calc(100% - 18px);margin:9px;padding:11px;font-size:14px;font-weight:900;background:var(--orange);color:#fff;border:none;border-radius:var(--rs);cursor:pointer}
-.add-all-btn:hover{background:var(--orange-d)}
-.note{font-size:11px;color:var(--muted);margin:.35rem 0 1.5rem;line-height:1.4}
+.cart-summary{background:#fff;border:2px solid #0011a7;border-radius:4px;overflow:hidden;margin-top:10px}
+.cart-sum-hdr{background:#0011a7;padding:10px 16px;display:flex;justify-content:space-between;align-items:center}
+.cart-sum-hdr p{font-size:14px;font-weight:900;color:#fff;margin:0}
+.cart-sum-hdr span{font-size:14px;font-weight:700;color:rgba(255,255,255,.8)}
+.btn-add-all{width:calc(100% - 16px);margin:8px;padding:12px;font-size:15px;font-weight:900;background:#0011a7;color:#fff;border:none;border-radius:4px;cursor:pointer}
+.btn-add-all:hover{background:#002f6c}
 
-/* Footer */
-.site-ftr{border-top:1px solid var(--line);padding:20px 0 0;display:flex;flex-wrap:wrap;gap:12px 22px;justify-content:center;font-size:13px;color:var(--muted)}
-.site-ftr a{color:var(--slate)}
+.mat-note{font-size:12px;color:#878688;margin-top:10px;line-height:1.5}
 
-/* Util */
+/* ── Footer ── */
+.site-footer{border-top:1px solid #e6e6e7;margin-top:40px;padding:22px max(20px,calc((100vw - 760px)/2));display:flex;flex-wrap:wrap;gap:10px 22px;justify-content:center;font-size:13px;color:#878688}
+.site-footer a{color:#535254}
+
+/* ── Hidden / visible utils ── */
 .hidden{display:none!important}
-.fmt-money{font-weight:700}
 
-@media(max-width:520px){
-  .entry-row{grid-template-columns:1fr 1fr;grid-template-rows:auto auto}
-  .entry-row .add-col{grid-column:1/-1}
-  .install-steps{grid-template-columns:repeat(2,1fr)}
-  .kit-stats{grid-template-columns:repeat(2,1fr)}
+/* ── PRINT AREA (screen: hidden; print: shown) ── */
+#print-area{display:none}
+.p-logo-txt{font-family:Lato,sans-serif;font-size:18px;font-weight:900;color:#0011a7;margin-bottom:2px}
+.p-logo-sub{font-size:11px;color:#535254;font-weight:400;margin-bottom:18px}
+.p-rule{border:none;border-top:1px solid #e6e6e7;margin:14px 0}
+.p-section-title{font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:#535254;margin:16px 0 8px}
+.p-door-row{font-size:14px;color:#1b1b1b;margin-bottom:5px;padding-left:14px}
+.p-kit-name{font-size:20px;font-weight:900;color:#0011a7;margin-bottom:2px}
+.p-kit-price{font-size:14px;color:#535254}
+.p-diag-block{margin:14px 0;page-break-inside:avoid}
+.p-diag-title{font-size:14px;font-weight:700;color:#1b1b1b;margin-bottom:6px}
+.p-step-list{list-style:none;padding:0;margin:0}
+.p-step-list li{display:flex;gap:10px;margin-bottom:10px;font-size:14px;color:#1b1b1b;line-height:1.5}
+.p-step-list li .pn{min-width:22px;height:22px;background:#0011a7;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;flex-shrink:0;margin-top:1px}
+.p-mat-line{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;border-bottom:1px dotted #e6e6e7;color:#1b1b1b}
+.p-mat-line:last-child{border-bottom:none}
+.p-total{display:flex;justify-content:space-between;font-size:15px;font-weight:900;padding-top:10px;color:#0011a7}
+.p-footer-note{font-size:12px;color:#878688;margin-top:18px;text-align:center}
+
+@media print {
+  .no-print{display:none!important}
+  #print-area{display:block!important;font-family:Lato,sans-serif;color:#1b1b1b;padding:0}
+  body{background:#fff}
+  @page{margin:.5in}
+}
+
+/* ── Responsive ── */
+@media(max-width:600px){
+  .site-nav{display:none}
+  .entry-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .entry-grid .btn-col{grid-column:1/-1}
+  .rec-stats{grid-template-columns:repeat(2,1fr)}
+  .diagram-stats{flex-direction:column;gap:4px}
+  .mat-right{flex-direction:column;align-items:flex-end;gap:4px}
 }
 </style>
 </head>
-<body>
-<div class="wrap">
+<body class="no-print">
 
-<!-- Header -->
-<div class="site-hdr">
-  <a href="https://bluetexinsulation.com/"><img src="../assets/bluetex-logo.png" alt="BlueTex Insulation"></a>
-  <div class="hdr-text">
-    <p>Garage Door Insulation</p>
-    <h1>Material Calculator</h1>
-    <small>Roll-Up &amp; Residential Doors</small>
+<!-- Site Header -->
+<header class="site-header no-print">
+  <a class="brand" href="https://bluetexinsulation.com/">
+    <img src="../assets/bluetex-logo.png" alt="BlueTex Insulation">
+  </a>
+  <nav class="site-nav">
+    <a href="https://bluetexinsulation.com/blogs/articles/how-to-measure-your-roll-up-garage-door-for-insulation">How to Measure</a>
+    <a href="https://bluetexinsulation.com/products/bluetex-2mm-pro-roll-up-garage-door-kit">View Kits</a>
+    <a href="tel:18005958772">1-800-595-8772</a>
+  </nav>
+</header>
+
+<!-- Page Intro -->
+<div class="page-intro no-print">
+  <div class="page-intro-inner">
+    <p class="eyebrow">Roll-Up &amp; Residential Garage Doors</p>
+    <h1>Get the right kit. Install it yourself.</h1>
+    <p class="lead">Enter your door dimensions to get a kit recommendation, a visual install layout for your specific door, and a printable guide.</p>
   </div>
 </div>
 
-<!-- Step 1: Your Doors -->
-<div class="sec">
-  <div class="sec-head">
-    <div class="snum">1</div>
-    <p class="stitle">Your Doors</p>
-    <p class="ssub">Enter each size and quantity</p>
-  </div>
-  <div class="entry-row">
-    <div class="fl"><label>Width (ft)</label><input type="number" id="d-w" min="1" step="0.5" placeholder="10"></div>
-    <div class="fl"><label>Height (ft)</label><input type="number" id="d-h" min="1" step="0.5" placeholder="10"></div>
-    <div class="fl"><label>Qty</label><input type="number" id="d-qty" min="1" value="1" style="text-align:center"></div>
-    <div class="add-col"><button class="add-btn" onclick="addDoor()">+ Add</button></div>
-  </div>
-  <div id="door-chips" class="door-chips"></div>
-  <div id="door-status" class="dstatus warn-none">
-    <i class="ti ti-door" style="font-size:14px"></i>
-    <span>No doors added — enter at least one door above.</span>
-  </div>
-</div>
+<div class="wrap no-print">
 
-<!-- Calculate -->
-<button id="calc-btn" onclick="doCalculate()" disabled>Get Recommendation →</button>
-
-<!-- Results (hidden until calculated) -->
-<div id="results" class="hidden">
-
-  <!-- Step 2: Recommendation -->
-  <div class="sec">
-    <div class="sec-head">
-      <div class="snum">2</div>
-      <p class="stitle">Recommendation</p>
+  <!-- ── Step 1: Enter Your Doors ── -->
+  <section class="step-section" id="s1">
+    <div class="step-hdr">
+      <span class="step-badge">1</span>
+      <span class="step-title">Enter Your Doors</span>
+      <span class="step-sub">— size and quantity</span>
     </div>
-    <div class="kit-card">
-      <p class="kit-eyebrow">Recommended Kit</p>
-      <p class="kit-name" id="r-kit-name">—</p>
-      <p class="kit-why" id="r-kit-why">—</p>
-      <div class="kit-stats">
-        <div class="stat"><span class="stat-val" id="r-doors">—</span><span class="stat-lbl">Doors</span></div>
-        <div class="stat"><span class="stat-val" id="r-sqft">—</span><span class="stat-lbl">Sq Ft</span></div>
-        <div class="stat"><span class="stat-val" id="r-lf">—</span><span class="stat-lbl">Linear Ft</span></div>
-        <div class="stat"><span class="stat-val" id="r-price">—</span><span class="stat-lbl">Est. Price</span></div>
+
+    <div class="entry-grid">
+      <div class="fl"><label>Width (ft)</label><input type="number" id="d-w" min="1" step="0.5" placeholder="10"></div>
+      <div class="fl"><label>Height (ft)</label><input type="number" id="d-h" min="1" step="0.5" placeholder="10"></div>
+      <div class="fl"><label>Qty</label><input type="number" id="d-qty" min="1" value="1" style="text-align:center"></div>
+      <div class="btn-col"><button class="btn-add" onclick="addDoor()">+ Add</button></div>
+    </div>
+    <p class="hint">Width drives how much material you need. Height determines the number of horizontal strips.</p>
+
+    <div id="door-chips" class="door-chips"></div>
+
+    <div id="door-status" class="door-status warn">
+      <i class="ti ti-alert-circle" style="font-size:15px"></i>
+      <span>No doors entered — add at least one door above.</span>
+    </div>
+
+    <button class="btn-primary" id="calc-btn" onclick="doCalculate()" disabled>
+      <i class="ti ti-chevron-right"></i> Get My Recommendation
+    </button>
+  </section>
+
+  <!-- ── Step 2: Recommendation ── -->
+  <section class="step-section" id="s2">
+    <div class="step-hdr">
+      <span class="step-badge">2</span>
+      <span class="step-title">Recommended Kit</span>
+    </div>
+
+    <div id="s2-empty" class="step-placeholder">
+      <i class="ti ti-package"></i>
+      <p>Enter your door dimensions above, then click <strong>Get My Recommendation</strong> to see the right kit for your setup.</p>
+    </div>
+    <div id="s2-content" class="hidden">
+      <div class="rec-card">
+        <p class="rec-eyebrow">Recommended for your setup</p>
+        <p class="rec-name" id="r-kit-name">—</p>
+        <p class="rec-why" id="r-kit-why">—</p>
+        <div class="rec-stats">
+          <div class="rec-stat"><span class="rec-stat-val" id="r-doors">—</span><span class="rec-stat-lbl">Doors</span></div>
+          <div class="rec-stat"><span class="rec-stat-val" id="r-sqft">—</span><span class="rec-stat-lbl">Sq Ft</span></div>
+          <div class="rec-stat"><span class="rec-stat-val" id="r-lf">—</span><span class="rec-stat-lbl">Linear Ft</span></div>
+          <div class="rec-stat"><span class="rec-stat-val" id="r-price">—</span><span class="rec-stat-lbl">Est. Price</span></div>
+        </div>
+      </div>
+      <div id="r-alts" class="rec-alts hidden"></div>
+      <div id="r-warnings"></div>
+    </div>
+  </section>
+
+  <!-- ── Step 3: Install Guide ── -->
+  <section class="step-section" id="s3">
+    <div class="step-hdr with-action">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="step-badge">3</span>
+        <span class="step-title">Install Layout</span>
+        <span class="step-sub">— your door, your measurements</span>
+      </div>
+      <button class="print-btn" id="print-btn" onclick="printGuide()" disabled>
+        <i class="ti ti-printer"></i> Print Guide
+      </button>
+    </div>
+
+    <!-- Live diagrams (update as doors are added) -->
+    <div id="s3-empty" class="step-placeholder">
+      <i class="ti ti-ruler-measure"></i>
+      <p>Add your door size above to see your install layout — including where to place tape and how many strips you need.</p>
+    </div>
+    <div id="s3-diagrams" class="diagram-cards hidden"></div>
+
+    <!-- Install steps — always visible once doors are entered -->
+    <div id="s3-steps" class="hidden">
+      <h3 style="font-size:15px;font-weight:700;color:#1b1b1b;margin-bottom:14px;margin-top:24px">How to install it, step by step</h3>
+      <div class="install-steps-list">
+        <div class="istep">
+          <div class="istep-num">1</div>
+          <div class="istep-body">
+            <p class="istep-title">Verify your measurements</p>
+            <p class="istep-desc">Measure width and height of the door in feet. Double-check — width drives how much material you need and height sets the strip count. <strong>Do not order without confirming.</strong></p>
+          </div>
+        </div>
+        <div class="istep">
+          <div class="istep-num">2</div>
+          <div class="istep-body">
+            <p class="istep-title">Apply double-sided tape vertically</p>
+            <p class="istep-desc">Run vertical strips of double-sided tape down the door at roughly 18" intervals. Start and end at each edge. The blue dashed lines in your diagram above show exactly where.</p>
+            <p class="istep-tip">Tip: Press firmly for 5–10 seconds per strip. Cold weather can reduce adhesion — warm the door first if needed.</p>
+          </div>
+        </div>
+        <div class="istep">
+          <div class="istep-num">3</div>
+          <div class="istep-body">
+            <p class="istep-title">Cut BlueTex to your door width</p>
+            <p class="istep-desc">Cut each horizontal strip to match the exact width of your door. The number of strips you need is shown in your diagram — each strip covers approximately 4 feet of door height.</p>
+          </div>
+        </div>
+        <div class="istep">
+          <div class="istep-num">4</div>
+          <div class="istep-body">
+            <p class="istep-title">Press strips from the bottom up</p>
+            <p class="istep-desc">Starting at the bottom of the door, press each strip firmly onto the double-sided tape. Work upward. Keep strips snug against each other — no gaps.</p>
+            <p class="istep-tip">Tip: Have a helper hold one end while you press the other for wide doors (16'+).</p>
+          </div>
+        </div>
+        <div class="istep">
+          <div class="istep-num">5</div>
+          <div class="istep-body">
+            <p class="istep-title">Seal every horizontal seam</p>
+            <p class="istep-desc">Apply white seam tape over every horizontal joint where two strips meet. Press firmly from edge to edge. This seals the vapor barrier and gives a clean, bright white finish.</p>
+          </div>
+        </div>
       </div>
     </div>
-    <div id="r-alts" class="alts hidden"></div>
-    <div id="r-warnings" class="hidden"></div>
-  </div>
+  </section>
 
-  <!-- Step 3: How It Goes On -->
-  <div class="sec">
-    <div class="sec-head">
-      <div class="snum">3</div>
-      <p class="stitle">How Installation Works</p>
-      <p class="ssub">4 steps, no special tools</p>
+  <!-- ── Step 4: What You Need ── -->
+  <section class="step-section" id="s4">
+    <div class="step-hdr">
+      <span class="step-badge">4</span>
+      <span class="step-title">What You Need</span>
+      <span class="step-sub">— your complete order</span>
     </div>
-    <div class="install-steps">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-icon"><i class="ti ti-ruler-measure"></i></div>
-        <p class="step-title">Measure &amp; Clean</p>
-        <p class="step-desc">Measure door panels. Wipe surface so tape sticks firmly.</p>
-      </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-icon"><i class="ti ti-align-center"></i></div>
-        <p class="step-title">Apply Tape</p>
-        <p class="step-desc">Press double-sided tape vertically at ~18" intervals across the door.</p>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-icon"><i class="ti ti-layers-subtract"></i></div>
-        <p class="step-title">Apply BlueTex</p>
-        <p class="step-desc">Roll out horizontal strips from the bottom up. Press onto tape.</p>
-      </div>
-      <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-icon"><i class="ti ti-writing"></i></div>
-        <p class="step-title">Tape Seams</p>
-        <p class="step-desc">Apply white seam tape over every horizontal seam. Bright, clean finish.</p>
-      </div>
-    </div>
-    <p style="font-size:12px;color:var(--muted);margin-top:8px;text-align:center">
-      <a href="https://bluetexinsulation.com/blogs/articles/how-to-measure-your-roll-up-garage-door-for-insulation" target="_blank">Full measuring guide →</a>
-    </p>
-  </div>
 
-  <!-- Step 4: What You Need -->
-  <div class="sec">
-    <div class="sec-head">
-      <div class="snum">4</div>
-      <p class="stitle">What You Need</p>
-      <p class="ssub" id="r-mat-sub">—</p>
+    <div id="s4-empty" class="step-placeholder">
+      <i class="ti ti-shopping-cart"></i>
+      <p>Your materials list will appear here after you click <strong>Get My Recommendation</strong>.</p>
     </div>
-    <div id="mat-list"></div>
-    <div class="cart-footer">
-      <div class="cart-hdr">
-        <p>Complete Order</p>
-        <span id="r-total-price">—</span>
+    <div id="s4-content" class="hidden">
+      <div id="mat-list"></div>
+      <div class="cart-summary">
+        <div class="cart-sum-hdr">
+          <p>Complete Order</p>
+          <span id="r-total-price">—</span>
+        </div>
+        <button class="btn-add-all" id="add-all-btn" onclick="addAllToCart()">Add All To Cart</button>
       </div>
-      <button class="add-all-btn" id="add-all-btn" onclick="addAllToCart()">Add All To Cart</button>
+      <p class="mat-note">Kit prices are estimates. Add to cart to confirm pricing. For unusual door sizes or custom quotes, call <a href="tel:18005958772">1-800-595-8772</a>.</p>
     </div>
-    <p class="note">Tape shortfall shown if included tape may not fully cover your door layout. Prices are estimates — confirm on product page. Contact us at <a href="tel:18005958772">1-800-595-8772</a> for custom layouts.</p>
-  </div>
-
-</div><!-- /results -->
-
-<!-- Footer -->
-<div class="site-ftr">
-  <span>Need help?</span>
-  <a href="tel:18005958772">1-800-595-8772</a>
-  <a href="https://bluetexinsulation.com/blogs/articles/how-to-measure-your-roll-up-garage-door-for-insulation">Measuring Guide</a>
-  <a href="https://bluetexinsulation.com/products/bluetex-2mm-pro-roll-up-garage-door-kit">View Kits</a>
-  <a href="https://bluetexinsulation.com/pages/contact-us">Contact</a>
-</div>
+  </section>
 
 </div><!-- /wrap -->
+
+<!-- Site Footer -->
+<footer class="site-footer no-print">
+  <span>BlueTex Insulation</span>
+  <a href="tel:18005958772">1-800-595-8772</a>
+  <a href="https://bluetexinsulation.com/blogs/articles/how-to-measure-your-roll-up-garage-door-for-insulation">How to Measure</a>
+  <a href="https://bluetexinsulation.com/products/bluetex-2mm-pro-roll-up-garage-door-kit">Roll-Up Kits</a>
+  <a href="https://bluetexinsulation.com/pages/contact-us">Contact Us</a>
+</footer>
+
+
+<!-- ════════════════════════════════════════════════════
+     PRINT AREA — only visible when printing
+     ════════════════════════════════════════════════════ -->
+<div id="print-area">
+  <!-- header -->
+  <p class="p-logo-txt">BlueTex™ Insulation</p>
+  <p class="p-logo-sub">Garage Door Insulation — Install Guide &nbsp;|&nbsp; <span id="p-date"></span></p>
+  <hr class="p-rule">
+
+  <!-- doors entered -->
+  <p class="p-section-title">Your Doors</p>
+  <div id="p-doors"></div>
+  <hr class="p-rule">
+
+  <!-- recommendation -->
+  <p class="p-section-title">Recommended Kit</p>
+  <p class="p-kit-name" id="p-kit-name">—</p>
+  <p class="p-kit-price" id="p-kit-price"></p>
+  <hr class="p-rule">
+
+  <!-- diagrams -->
+  <p class="p-section-title">Install Layout — Your Doors</p>
+  <div id="p-diagrams"></div>
+  <hr class="p-rule">
+
+  <!-- steps -->
+  <p class="p-section-title">Installation Steps</p>
+  <ul class="p-step-list">
+    <li><span class="pn">1</span><span><strong>Verify measurements.</strong> Width drives material need. Height sets strip count. Do not order without confirming.</span></li>
+    <li><span class="pn">2</span><span><strong>Apply double-sided tape vertically</strong> at ~18" intervals across the door. See diagram above for exact positions.</span></li>
+    <li><span class="pn">3</span><span><strong>Cut BlueTex strips</strong> to the exact door width. Each strip covers ~4 feet of height. Strip count is shown in your diagram.</span></li>
+    <li><span class="pn">4</span><span><strong>Press strips from the bottom up.</strong> Firm pressure on the tape. Keep strips snug — no gaps between them.</span></li>
+    <li><span class="pn">5</span><span><strong>Seal every seam</strong> with white seam tape. Press firmly edge to edge for a clean, finished interior.</span></li>
+  </ul>
+  <hr class="p-rule">
+
+  <!-- materials checklist -->
+  <p class="p-section-title">Materials Checklist</p>
+  <div id="p-materials"></div>
+  <hr class="p-rule">
+
+  <p class="p-footer-note">Questions? Call 1-800-595-8772 &nbsp;|&nbsp; bluetexinsulation.com &nbsp;|&nbsp; Prices are estimates — confirm at checkout.</p>
+</div>
+
 <script type="module" src="app.js"></script>
 </body>
 </html>
