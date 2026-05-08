@@ -154,7 +154,6 @@ h2 {
   justify-content: space-between;
 }
 
-.ghost-button,
 .secondary-button {
   align-items: center;
   border-radius: 4px;
@@ -162,14 +161,6 @@ h2 {
   display: inline-flex;
   font-weight: 700;
   min-height: 42px;
-}
-
-.ghost-button {
-  background: #ffffff;
-  border: 1px solid var(--line);
-  color: var(--ink);
-  padding: 0 14px;
-  white-space: nowrap;
 }
 
 .secondary-button {
@@ -485,23 +476,8 @@ tbody tr:last-child td {
   color: var(--ink);
 }
 
-.embed-mode .site-header,
-.embed-mode .site-footer {
-  display: none;
-}
-
-.embed-mode main {
-  max-width: 1040px;
-  padding-top: 20px;
-}
-
-.embed-mode .calculator-shell {
-  grid-template-columns: minmax(310px, 0.8fr) minmax(0, 1.2fr);
-}
-
 @media (max-width: 920px) {
-  .calculator-shell,
-  .embed-mode .calculator-shell {
+  .calculator-shell {
     grid-template-columns: 1fr;
   }
 
@@ -566,7 +542,4 @@ tbody tr:last-child td {
     flex-direction: column;
   }
 
-  .ghost-button {
-    justify-content: center;
-  }
 }

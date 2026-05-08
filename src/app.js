@@ -6,7 +6,6 @@ const summary = document.querySelector("[data-summary]");
 const details = document.querySelector("[data-details]");
 const tapeSummary = document.querySelector("[data-tape-summary]");
 const addRowButton = document.querySelector("[data-add-row]");
-const modeButton = document.querySelector("[data-mode-toggle]");
 const rowsContainer = document.querySelector("[data-rows]");
 
 const defaultRows = [
@@ -242,16 +241,7 @@ function update() {
   renderResults(calculate(readRows()));
 }
 
-function applyEmbedModeFromUrl() {
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("embed") === "1") {
-    document.body.classList.add("embed-mode");
-    modeButton.setAttribute("aria-pressed", "true");
-  }
-}
-
 renderRows();
-applyEmbedModeFromUrl();
 update();
 
 form.addEventListener("input", update);
@@ -262,12 +252,4 @@ addRowButton.addEventListener("click", () => {
   rows.push({ width: "", height: "", qty: 1 });
   renderRows(rows);
   update();
-});
-
-modeButton.addEventListener("click", () => {
-  document.body.classList.toggle("embed-mode");
-  modeButton.setAttribute(
-    "aria-pressed",
-    document.body.classList.contains("embed-mode").toString()
-  );
 });
