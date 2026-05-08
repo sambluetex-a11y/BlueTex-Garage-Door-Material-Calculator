@@ -33,23 +33,27 @@ function addDoor() {
   document.getElementById("d-qty").value = "1";
   renderDoors();
   updateInstallDiagrams();
+  doCalculate();
 }
 
 function removeDoor(id) {
   doors = doors.filter(d => d.id !== id);
   renderDoors();
   updateInstallDiagrams();
+  if (doors.length > 0) {
+    doCalculate();
+  } else {
+    resetResults();
+  }
 }
 
 function renderDoors() {
-  const chipsEl   = document.getElementById("door-chips");
-  const statusEl  = document.getElementById("door-status");
-  const calcBtn   = document.getElementById("calc-btn");
-  const printBtn  = document.getElementById("print-btn");
+  const chipsEl  = document.getElementById("door-chips");
+  const statusEl = document.getElementById("door-status");
+  const printBtn = document.getElementById("print-btn");
 
-  // chip list
   chipsEl.innerHTML = doors.map(d => {
-    const lf = Math.ceil(d.height / 4) * d.width;
+    const lf     = Math.ceil(d.height / 4) * d.width;
     const strips = Math.ceil(d.height / 4);
     return `
       <div class="chip">
@@ -62,33 +66,34 @@ function renderDoors() {
       </div>`;
   }).join("");
 
-  // status bar
   if (doors.length === 0) {
     statusEl.className = "door-status warn";
     statusEl.innerHTML = `<i class="ti ti-alert-circle" style="font-size:15px"></i>
       <span>No doors entered — add at least one door above.</span>`;
-    calcBtn.disabled = true;
     printBtn.disabled = true;
   } else {
     const total = doors.reduce((s, d) => s + d.qty, 0);
     statusEl.className = "door-status ok";
     statusEl.innerHTML = `<i class="ti ti-circle-check-filled" style="font-size:16px"></i>
-      <span>${total} door${total !== 1 ? "s" : ""} entered — click <strong>Get My Recommendation</strong> when ready.</span>`;
-    calcBtn.disabled = false;
+      <span>${total} door${total !== 1 ? "s" : ""} entered.</span>`;
   }
+}
+
+function resetResults() {
+  calcResult = null;
+  cartItems  = [];
+  document.getElementById("s2-empty").classList.remove("hidden");
+  document.getElementById("s2-content").classList.add("hidden");
+  document.getElementById("s4-empty").classList.remove("hidden");
+  document.getElementById("s4-content").classList.add("hidden");
+  document.getElementById("print-btn").disabled = true;
 }
 
 // ── SVG Door Diagram ───────────────────────────────────────────────
 
-function tapeStripCount(widthFt) {
-  // Matches calculator.js: Math.ceil(width*12 / 18) + 1
-  return Math.ceil((widthFt * 12) / 18) + 1;
-}
-
 function buildDoorSVG(widthFt, heightFt) {
-  const STRIP_H_FT   = 4;      // each horizontal run covers ~4 ft of height
-  const nStrips  = Math.ceil(heightFt / STRIP_H_FT);
-  const nTapes   = tapeStripCount(widthFt);
+  const STRIP_H_FT = 4;
+  const nStrips    = Math.ceil(heightFt / STRIP_H_FT);
 
   // Coordinate system
   const ML = 58, MT = 34, MR = 58, MB = 28;
@@ -125,28 +130,22 @@ function buildDoorSVG(widthFt, heightFt) {
     }
   }
 
-  // ── Tape lines (vertical dashed blue) ──
-  for (let t = 0; t < nTapes; t++) {
-    const x = ML + (t / (nTapes - 1)) * drawW;
-    s += `<line x1="${x.toFixed(1)}" y1="${MT}" x2="${x.toFixed(1)}" y2="${MT + drawH}"
-      stroke="#0011a7" stroke-width="1.5" stroke-dasharray="5,4" opacity="0.55"/>`;
-
-    // Tape spacing label on first gap
-    if (t === 0 && nTapes > 1) {
-      const x2 = ML + (1 / (nTapes - 1)) * drawW;
-      const midX = (x + x2) / 2;
-      const spacingIn = Math.round((widthFt * 12) / (nTapes - 1));
-      s += `<text x="${midX.toFixed(1)}" y="${MT + drawH + 18}"
-        font-size="9" font-family="Lato,sans-serif" fill="#0011a7" text-anchor="middle"
-        opacity="0.8">${spacingIn}"</text>`;
-      // tick marks
-      s += `<line x1="${x.toFixed(1)}" y1="${MT + drawH + 6}" x2="${x.toFixed(1)}" y2="${MT + drawH + 10}"
-        stroke="#0011a7" stroke-width="1" opacity="0.5"/>`;
-      s += `<line x1="${x2.toFixed(1)}" y1="${MT + drawH + 6}" x2="${x2.toFixed(1)}" y2="${MT + drawH + 10}"
-        stroke="#0011a7" stroke-width="1" opacity="0.5"/>`;
-      s += `<line x1="${x.toFixed(1)}" y1="${MT + drawH + 8}" x2="${x2.toFixed(1)}" y2="${MT + drawH + 8}"
-        stroke="#0011a7" stroke-width="1" opacity="0.5"/>`;
-    }
+  // ── Tape lines (horizontal dashed blue — one at each strip seam) ──
+  // Tape pieces run horizontally across the door width, spaced ~18" apart across the width.
+  // Each seam between strips (plus top and bottom edges) gets a horizontal tape run.
+  for (let t = 0; t <= nStrips; t++) {
+    const y = MT + t * stripH;
+    s += `<line x1="${ML}" y1="${y.toFixed(1)}" x2="${ML + drawW}" y2="${y.toFixed(1)}"
+      stroke="#0011a7" stroke-width="2" stroke-dasharray="6,4" opacity="0.7"/>`;
+  }
+  // Spacing annotation: show tape piece spacing across the width
+  {
+    const nPieces = Math.ceil((widthFt * 12) / 18) + 1;
+    const spacingIn = Math.round((widthFt * 12) / (nPieces - 1));
+    const labelY = (MT + drawH + 18).toFixed(1);
+    s += `<text x="${(ML + drawW / 2).toFixed(1)}" y="${labelY}"
+      font-size="10" font-family="Lato,sans-serif" fill="#0011a7" text-anchor="middle"
+      opacity="0.8">${nPieces} tape pieces · ~${spacingIn}" apart</text>`;
   }
 
   // ── Door outline ──
@@ -212,17 +211,18 @@ function updateInstallDiagrams() {
   diagramsEl.innerHTML = [...seen.values()].map(door => {
     const { width, height, totalQty } = door;
     const nStrips   = Math.ceil(height / 4);
-    const nTapes    = tapeStripCount(width);
-    const lfPerDoor = Math.ceil(height / 4) * width;
+    const lfPerDoor = nStrips * width;
     const totalLf   = lfPerDoor * totalQty;
 
+    const nTapeSeams  = nStrips + 1;
+    const nTapePieces = Math.ceil((width * 12) / 18) + 1;
     return `
       <div class="diagram-card">
         <div class="diagram-card-hdr">
           <h3>${niceSize(width, height)}</h3>
           <div class="diagram-stats">
             <span class="dstat"><strong>${nStrips}</strong> horizontal strip${nStrips !== 1 ? "s" : ""}</span>
-            <span class="dstat"><strong>${nTapes}</strong> tape strips</span>
+            <span class="dstat"><strong>${nTapeSeams}</strong> tape seams · <strong>${nTapePieces}</strong> pieces/seam</span>
             <span class="dstat"><strong>${lfPerDoor}'</strong> linear ft / door</span>
             ${totalQty > 1 ? `<span class="dstat"><strong>${totalLf}'</strong> total (${totalQty} doors)</span>` : ""}
           </div>
@@ -231,14 +231,13 @@ function updateInstallDiagrams() {
         <div class="diagram-legend">
           <span class="legend-item">
             <span class="legend-swatch-strip"></span>
-            Horizontal BlueTex strip (~4' each)
+            BlueTex insulation strip (~4' each, runs full width)
           </span>
           <span class="legend-item">
             <span class="legend-swatch-tape-box">
-              <span style="display:inline-block;width:1.5px;height:14px;background:#0011a7;opacity:.6"></span>
-              <span style="display:inline-block;width:1.5px;height:14px;background:#0011a7;opacity:.6;margin-left:3px"></span>
+              <span style="display:inline-block;width:20px;height:2px;background:#0011a7;opacity:.7;vertical-align:middle"></span>
             </span>
-            Vertical double-sided tape (~18" apart)
+            Horizontal double-sided tape (~18" pieces across width)
           </span>
         </div>
       </div>`;
@@ -254,9 +253,6 @@ function doCalculate() {
   renderRecommendation(calcResult);
   renderMaterials(calcResult);
   document.getElementById("print-btn").disabled = false;
-
-  // Scroll to recommendation
-  document.getElementById("s2").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 // ── Render recommendation (Step 2) ────────────────────────────────
@@ -447,13 +443,14 @@ function printGuide() {
     doorGroups.set(key, g);
   }
   document.getElementById("p-doors").innerHTML = [...doorGroups.values()].map(g => {
-    const strips = Math.ceil(g.height / 4);
-    const tapes  = tapeStripCount(g.width);
-    const lf     = strips * g.width;
+    const strips     = Math.ceil(g.height / 4);
+    const tapeSeams  = strips + 1;
+    const tapePieces = Math.ceil((g.width * 12) / 18) + 1;
+    const lf         = strips * g.width;
     return `<p class="p-door-row">
       <strong>${g.qty}×</strong> ${niceSize(g.width, g.height)}
       &nbsp;—&nbsp; ${strips} strip${strips !== 1 ? "s" : ""},
-      ${tapes} tape strips, ${lf}' linear ft per door
+      ${tapeSeams} tape seams (${tapePieces} pieces/seam), ${lf}' linear ft per door
     </p>`;
   }).join("");
 
@@ -471,10 +468,12 @@ function printGuide() {
 
   // Print diagrams (one per unique size)
   document.getElementById("p-diagrams").innerHTML = [...doorGroups.values()].map(g => {
-    const strips   = Math.ceil(g.height / 4);
-    const tapes    = tapeStripCount(g.width);
-    const lf       = strips * g.width;
-    const stripRows = Array.from({ length: strips }, (_, i) => {
+    const strips     = Math.ceil(g.height / 4);
+    const tapeSeams  = strips + 1;
+    const tapePieces = Math.ceil((g.width * 12) / 18) + 1;
+    const lf         = strips * g.width;
+    const spacingIn  = Math.round((g.width * 12) / (tapePieces - 1));
+    const stripRows  = Array.from({ length: strips }, (_, i) => {
       const h = Math.min(4, g.height - i * 4);
       return `Strip ${i + 1}: ${h}' tall × ${g.width}' wide = ${h * g.width} sq ft`;
     });
@@ -484,7 +483,7 @@ function printGuide() {
         ${buildDoorSVG(g.width, g.height)}
         <p style="font-size:12px;color:#535254;margin-top:8px">
           ${strips} horizontal strip${strips !== 1 ? "s" : ""} &nbsp;·&nbsp;
-          ${tapes} vertical tape strips (~${Math.round((g.width * 12) / (tapes - 1))}" apart) &nbsp;·&nbsp;
+          ${tapeSeams} horizontal tape seams (${tapePieces} pieces ~${spacingIn}" apart) &nbsp;·&nbsp;
           ${lf}' linear ft per door
         </p>
         <p style="font-size:12px;color:#535254;margin-top:4px">${stripRows.join(" | ")}</p>
