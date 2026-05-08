@@ -110,13 +110,12 @@ button,input{font-family:inherit;font-size:inherit}
 .legend-swatch-tape-box{display:flex;align-items:center;gap:2px}
 
 /* ── Install steps (always visible) ── */
-.install-steps-list{display:grid;gap:12px}
-.istep{display:flex;gap:14px;padding:12px;background:#fff;border:1px solid #e6e6e7;border-radius:4px}
-.istep-num{width:28px;height:28px;border-radius:50%;background:#0011a7;color:#fff;font-size:13px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.install-steps-list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.istep{display:flex;gap:10px;padding:10px 12px;background:#fff;border:1px solid #e6e6e7;border-radius:4px;align-items:flex-start}
+.istep-num{width:24px;height:24px;border-radius:50%;background:#0011a7;color:#fff;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
 .istep-body{flex:1}
-.istep-title{font-size:15px;font-weight:700;color:#1b1b1b;margin-bottom:3px}
-.istep-desc{font-size:14px;color:#535254;line-height:1.5}
-.istep-tip{font-size:13px;color:#0011a7;margin-top:4px;font-style:italic}
+.istep-title{font-size:13px;font-weight:700;color:#1b1b1b;margin-bottom:2px}
+.istep-desc{font-size:12px;color:#535254;line-height:1.4}
 
 /* ── Materials list ── */
 .mat-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff;border:1px solid #e6e6e7;border-radius:4px;margin-bottom:6px}
