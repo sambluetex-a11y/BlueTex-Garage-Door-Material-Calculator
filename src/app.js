@@ -4,8 +4,8 @@ const form = document.querySelector("[data-calculator-form]");
 const result = document.querySelector("[data-results]");
 const summary = document.querySelector("[data-summary]");
 const details = document.querySelector("[data-details]");
+const tapeSummary = document.querySelector("[data-tape-summary]");
 const addRowButton = document.querySelector("[data-add-row]");
-const modeButton = document.querySelector("[data-mode-toggle]");
 const rowsContainer = document.querySelector("[data-rows]");
 
 const defaultRows = [
@@ -69,6 +69,51 @@ function renderEmptyState() {
     </div>
   `;
   details.innerHTML = "";
+  tapeSummary.innerHTML = "";
+}
+
+function shortFitNote(best, warnings) {
+  if (warnings.length) return warnings[0];
+  if (best.items.some((item) => item.family === "multi62")) {
+    return "62\" multi-door kit matched the entered 10' or 15' door height use case.";
+  }
+  if (best.items.some((item) => item.family === "multi50")) {
+    return "50\" multi-door kit matched the entered 8' or 12' door use case.";
+  }
+  return "Standard 50\" kit layout selected for these dimensions.";
+}
+
+function renderTapeSummary(model, tapeStatus) {
+  const tapeRows = model.rows
+    .map((row, index) => {
+      const plan = model.tapePlan.find((door) => door.groupIndex === index);
+      if (!plan) return "";
+      return `
+        <li>
+          <strong>${row.qty}x ${formatFeet(row.width)} W x ${formatFeet(row.height)} H</strong>
+          <span>${plan.strips} strips per door x ${formatFeet(row.height)} tall = ${formatFeet(plan.tapeFeet)} per door</span>
+          ${row.qty > 1 ? `<span>${formatFeet(plan.tapeFeet * row.qty)} for this door size</span>` : ""}
+        </li>
+      `;
+    })
+    .join("");
+
+  const tapeIncludedText =
+    model.recommendation.primaryPlan.tapeRolls > 0
+      ? `Recommended kits include about ${formatFeet(model.tapeFeetIncluded)}.`
+      : "Tape should be quoted with the custom setup.";
+
+  tapeSummary.innerHTML = `
+    <section class="tape-card">
+      <div class="panel-heading">
+        <h2>Tape Recommendation</h2>
+        ${tapeStatus}
+      </div>
+      <p class="tape-total">${formatFeet(model.tapeFeetNeeded)} total double-sided tape needed. ${tapeIncludedText}</p>
+      <p>Estimate uses one vertical strip about every 18" across each door width.</p>
+      <ul class="tape-list">${tapeRows}</ul>
+    </section>
+  `;
 }
 
 function renderResults(model) {
@@ -81,37 +126,46 @@ function renderResults(model) {
   }
 
   const best = model.recommendation.primaryPlan;
-  const alternatives = model.recommendation.alternatives;
   const priceText =
     best.estimatedPrice === null
       ? "Contact for custom sizing"
       : `${formatMoney(best.estimatedPrice)} estimated kit price`;
-  const spareText =
-    best.spareLinearFeet === null
-      ? "Use the footage below for custom quoting"
-      : best.spareLinearFeet >= 0
-        ? `${formatFeet(best.spareLinearFeet)} spare material in this recommendation`
-        : "Selected by product-family coverage limits";
   const tapeStatus =
     model.tapeShortfall > 0
       ? `<span class="status warn">Add tape recommended</span>`
       : `<span class="status ok">Included tape covers this layout</span>`;
+  const coverageText =
+    best.totalLinearFeet === null
+      ? "Custom footage needed"
+      : `${formatFeet(best.totalLinearFeet)} kit material`;
+  const requiredText =
+    best.requiredLinearFeet === null
+      ? "Use the custom footage below"
+      : `${formatFeet(best.requiredLinearFeet)} layout footage needed`;
+  const fitNote = shortFitNote(best, model.recommendation.warnings);
+
+  renderTapeSummary(model, tapeStatus);
 
   summary.innerHTML = `
     <div class="metric primary">
-      <span>Recommended kit plan</span>
+      <span>Best kit plan</span>
       <strong>${best.label}</strong>
       <small>${priceText}</small>
     </div>
     <div class="metric">
-      <span>Material layout footage</span>
-      <strong>${formatFeet(best.requiredLinearFeet)}</strong>
-      <small>${spareText}</small>
+      <span>Kit coverage</span>
+      <strong>${coverageText}</strong>
+      <small>${requiredText}</small>
     </div>
     <div class="metric">
-      <span>Door coverage</span>
+      <span>Tape needed</span>
+      <strong>${formatFeet(model.tapeFeetNeeded)}</strong>
+      <small>${model.tapePlan[0]?.spacingInches || 18}" spacing estimate; ${model.tapeShortfall > 0 ? "add tape" : "recommended kits include enough"}</small>
+    </div>
+    <div class="metric">
+      <span>Fit note</span>
       <strong>${model.materialMath.totalDoorCount} door${model.materialMath.totalDoorCount === 1 ? "" : "s"}</strong>
-      <small>${Math.round(model.materialMath.totalArea)} sq ft checked against kit limits first</small>
+      <small>${fitNote}</small>
     </div>
   `;
 
@@ -129,21 +183,6 @@ function renderResults(model) {
     })
     .join("");
 
-  const tapeRows = model.rows
-    .map((row, index) => {
-      const plan = model.tapePlan.find((door) => door.groupIndex === index);
-      if (!plan) return "";
-      return `
-        <tr>
-          <td>${row.qty}x ${formatFeet(row.width)} W x ${formatFeet(row.height)} H</td>
-          <td>${plan.strips} vertical strips per door</td>
-          <td>${formatFeet(plan.tapeFeet)} per door</td>
-          <td>${formatFeet(plan.tapeFeet * row.qty)}</td>
-        </tr>
-      `;
-    })
-    .join("");
-
   details.innerHTML = `
     <section class="result-panel recommendation">
       <div>
@@ -151,19 +190,6 @@ function renderResults(model) {
         ${best.reasoning.map((line) => `<p>${line}</p>`).join("")}
       </div>
       <ul>${kitList(best)}</ul>
-      ${
-        alternatives.length
-          ? `<p class="alternate">Alternatives: ${alternatives
-              .map((item) => {
-                const spare =
-                  item.spareLinearFeet === null
-                    ? "custom sizing"
-                    : `${formatFeet(item.requiredLinearFeet)} layout footage`;
-                return `${item.label} (${spare})`;
-              })
-              .join("; ")}.</p>`
-          : ""
-      }
       ${
         model.recommendation.warnings.length
           ? `<div class="warning-list">${model.recommendation.warnings
@@ -208,32 +234,6 @@ function renderResults(model) {
         </table>
       </div>
     </section>
-
-    <section class="result-panel">
-      <div class="panel-heading">
-        <h2>Double-Sided Tape Plan</h2>
-        ${tapeStatus}
-      </div>
-      <p>Plan on vertical double-sided tape strips across each door at roughly 18" spacing, then tighten spacing where the installer wants more grab. The 12" spacing scenario would use about ${formatFeet(model.tighterTapeFeetNeeded)} total tape.</p>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Door size</th>
-              <th>Recommended strips</th>
-              <th>Tape per door</th>
-              <th>Total tape</th>
-            </tr>
-          </thead>
-          <tbody>${tapeRows}</tbody>
-        </table>
-      </div>
-      <p class="tape-total">Recommended layout: ${formatFeet(model.tapeFeetNeeded)} tape needed. ${
-        best.tapeRolls > 0
-          ? `Kit includes about ${formatFeet(model.tapeFeetIncluded)} across ${best.tapeRolls} roll${best.tapeRolls === 1 ? "" : "s"}.`
-          : "Tape should be quoted with the custom roll setup."
-      }</p>
-    </section>
   `;
 }
 
@@ -241,16 +241,7 @@ function update() {
   renderResults(calculate(readRows()));
 }
 
-function applyEmbedModeFromUrl() {
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("embed") === "1") {
-    document.body.classList.add("embed-mode");
-    modeButton.setAttribute("aria-pressed", "true");
-  }
-}
-
 renderRows();
-applyEmbedModeFromUrl();
 update();
 
 form.addEventListener("input", update);
@@ -261,12 +252,4 @@ addRowButton.addEventListener("click", () => {
   rows.push({ width: "", height: "", qty: 1 });
   renderRows(rows);
   update();
-});
-
-modeButton.addEventListener("click", () => {
-  document.body.classList.toggle("embed-mode");
-  modeButton.setAttribute(
-    "aria-pressed",
-    document.body.classList.contains("embed-mode").toString()
-  );
 });

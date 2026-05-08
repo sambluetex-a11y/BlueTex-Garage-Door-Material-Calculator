@@ -25,7 +25,7 @@ function assertPlan(width, height, qty, expectedItems) {
 const threeTenByTen = calculate([{ width: 10, height: 10, qty: 3 }]);
 assert.equal(threeTenByTen.materialMath.footage50, 90);
 assert.equal(threeTenByTen.materialMath.efficient50Footage, 80);
-assert.equal(itemQty(threeTenByTen.recommendation.primaryPlan, "multi62"), 1);
+assert.equal(itemQty(threeTenByTen.recommendation.primaryPlan, "multi50"), 1);
 
 const twoFourteenByFourteen = calculate([{ width: 14, height: 14, qty: 2 }]);
 assert.equal(twoFourteenByFourteen.materialMath.footage50, 112);
@@ -54,10 +54,10 @@ assert.equal(itemQty(planFor(8, 8), "single"), 1);
 assert.equal(itemQty(planFor(10, 10), "single"), 1);
 assert.equal(itemQty(planFor(12, 12), "single"), 1);
 assert.equal(itemQty(planFor(16, 12), "double"), 1);
-assert.equal(itemQty(planFor(20, 14), "oversized"), 1);
-assert.equal(planFor(20, 14).label, "1x Oversized Garage Door Kit");
-assert.equal(itemQty(planFor(21, 14), "oversized"), 1);
-assert.equal(planFor(21, 14).label, "1x Oversized Garage Door Kit");
+assert.equal(planFor(20, 14).family, "custom");
+assert.equal(planFor(20, 14).label, "Custom / Larger Roll Needed");
+assert.equal(planFor(21, 14).family, "custom");
+assert.equal(planFor(21, 14).label, "Custom / Larger Roll Needed");
 assert.equal(planFor(22, 14).family, "custom");
 assert.equal(planFor(22, 14).label, "Custom / Larger Roll Needed");
 
@@ -65,16 +65,35 @@ assert.equal(itemQty(planFor(10, 10, 2), "double"), 1);
 assert.equal(itemQty(planFor(11, 11, 2), "oversized"), 1);
 assert.notEqual(planFor(11, 11, 2).family, "multi62");
 
-assertPlan(12, 12, 6, { multi50: 2 });
+assertPlan(12, 12, 6, { oversized: 1, multi50: 1 });
 assertPlan(12, 12, 7, { multi50: 2 });
-assertPlan(10, 10, 3, { multi62: 1 });
-assertPlan(10, 10, 6, { multi62: 1 });
+assertPlan(10, 10, 3, { multi50: 1 });
+assertPlan(10, 10, 6, { multi50: 1 });
+assertPlan(15, 15, 3, { multi62: 1 });
 assertPlan(8, 8, 8, { multi50: 1 });
-assertPlan(8, 8, 11, { multi50: 2 });
+assertPlan(8, 8, 11, { single: 1, multi50: 1 });
+
+const mixedEligiblePair = calculate([
+  { width: 10, height: 10, qty: 1 },
+  { width: 8, height: 10, qty: 1 }
+]);
+assert.equal(mixedEligiblePair.recommendation.primaryPlan.label, "1x Double Garage Door Kit");
 
 const tape = calculate([{ width: 10, height: 10, qty: 2 }]);
-assert.equal(tape.tapePlan[0].strips, 8);
-assert.equal(tape.tapeFeetNeeded, 160);
+assert.equal(tape.tapePlan[0].strips, 7);
+assert.equal(tape.tapePlan[0].tapeFeet, 70);
+assert.equal(tape.tapeFeetNeeded, 140);
 assert.equal(tape.tapeFeetIncluded >= tape.tapeFeetNeeded, true);
+
+const screenshotTape = calculate([
+  { width: 10, height: 10, qty: 2 },
+  { width: 14, height: 14, qty: 1 },
+  { width: 8, height: 9, qty: 1 }
+]);
+assert.equal(screenshotTape.recommendation.primaryPlan.label, "1x Multi-Door Kit - 50\" Wide");
+assert.equal(screenshotTape.tapePlan.find((door) => door.groupIndex === 0).strips, 7);
+assert.equal(screenshotTape.tapePlan.find((door) => door.groupIndex === 1).strips, 10);
+assert.equal(screenshotTape.tapePlan.find((door) => door.groupIndex === 2).strips, 6);
+assert.equal(screenshotTape.tapeFeetNeeded, 334);
 
 console.log("Calculator tests passed.");
