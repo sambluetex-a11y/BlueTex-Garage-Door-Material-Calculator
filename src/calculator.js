@@ -520,14 +520,72 @@ function customPlan(materialMath) {
   };
 }
 
+function buildGlobalMultiKitCandidates(materialMath) {
+  const { efficient50Footage, footage62, totalArea, totalDoorCount } = materialMath;
+  if (totalDoorCount < 2) return [];
+
+  const candidates = [];
+
+  const m50 = kitById("multi50");
+  const n50 = Math.ceil(efficient50Footage / m50.linearFeet);
+  if (n50 >= 1 && n50 <= 4 && m50.coverageSqft * n50 >= totalArea) {
+    candidates.push(makeGlobalMultiPlan("multi50", n50, efficient50Footage, totalArea));
+  }
+
+  const m62 = kitById("multi62");
+  const n62 = Math.ceil(footage62 / m62.linearFeet);
+  if (n62 >= 1 && n62 <= 4 && m62.coverageSqft * n62 >= totalArea) {
+    candidates.push(makeGlobalMultiPlan("multi62", n62, footage62, totalArea));
+  }
+
+  return candidates;
+}
+
+function makeGlobalMultiPlan(family, count, requiredLF, totalArea) {
+  const kit = kitById(family);
+  const totalLF = kit.linearFeet * count;
+  const items = [{ family, label: kit.label, quantity: count }];
+
+  return {
+    family: count === 1 ? family : "bundle",
+    label: planLabel(items),
+    items,
+    estimatedPrice: kit.price * count,
+    requiredLinearFeet: requiredLF,
+    totalLinearFeet: totalLF,
+    spareLinearFeet: totalLF - requiredLF,
+    spareCapacity: kit.coverageSqft * count - totalArea,
+    kitCount: count,
+    tapeRolls: kit.tapeRolls * count,
+    seamTapeRolls: kit.seamTapeRolls * count,
+    intentPenalty: 0,
+    complexity: 1,
+    assignments: []
+  };
+}
+
 export function buildCandidatePlans(rows) {
   const classification = classifyRequest(rows);
   if (classification.totalDoorCount === 0) return [];
 
+  const materialMath = calculateMaterialMath(rows);
   const rowPlanSets = classification.mergedRows.map(rowPlans);
-  if (rowPlanSets.some((plans) => plans.length === 0)) return [];
 
-  return combineRowPlanSets(rowPlanSets).map(addPlanExplanation);
+  const perRowPlans = rowPlanSets.every((plans) => plans.length > 0)
+    ? combineRowPlanSets(rowPlanSets)
+    : [];
+
+  // Only generate global multi-kit candidates when per-row planning didn't
+  // already surface a multi-kit recommendation — avoids overriding per-row
+  // family preferences (e.g. multi50 vs multi62 for same-size door groups).
+  const bestPerRow = perRowPlans[0];
+  const perRowHasMulti = bestPerRow?.items.some((item) => item.family.startsWith("multi"));
+  const globalCandidates = perRowHasMulti ? [] : buildGlobalMultiKitCandidates(materialMath);
+
+  return [...perRowPlans, ...globalCandidates]
+    .sort(comparePlans)
+    .slice(0, 12)
+    .map(addPlanExplanation);
 }
 
 function addPlanExplanation(plan) {

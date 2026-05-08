@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BlueTex Garage Door Insulation — Material Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --orange:#FF6200;--orange-d:#D95200;--navy:#1E293B;--slate:#334155;
+  --ink:#111827;--muted:#6b7280;--line:#e5e7eb;--line-m:#d1d5db;
+  --bg:#f8f9fa;--card:#fff;--shade:#F1F5F9;
+  --green:#15803D;--red:#DC2626;--warn:#92400E;
+  --r:8px;--rs:6px
+}
+body{font-family:Lato,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.5}
+a{color:var(--slate);text-decoration:none}
+a:hover{text-decoration:underline}
+button,input{font-family:inherit;font-size:inherit}
+
+/* Layout */
+.wrap{max-width:660px;margin:0 auto;padding:0 16px 48px}
+
+/* Header */
+.site-hdr{padding:16px 0 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.site-hdr img{height:36px;width:auto;display:block}
+.hdr-text p{font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 1px}
+.hdr-text h1{font-size:17px;font-weight:900;color:var(--ink);margin:0;line-height:1.2}
+.hdr-text small{font-size:11px;color:var(--muted)}
+
+/* Section cards */
+.sec{background:var(--card);border:1.5px solid var(--line-m);border-radius:var(--r);padding:.65rem .8rem;margin-bottom:.45rem}
+.sec-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.sec-head.no-mb{margin-bottom:0}
+.snum{width:22px;height:22px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;flex-shrink:0}
+.stitle{font-size:15px;font-weight:900;color:var(--ink);margin:0;flex:1}
+.ssub{font-size:12px;color:var(--muted);margin:0}
+
+/* Door entry */
+.entry-row{display:grid;grid-template-columns:1fr 1fr 64px auto;gap:7px;align-items:end;margin-bottom:8px}
+.fl label{display:block;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.fl input{width:100%;padding:7px 9px;border:1.5px solid var(--line-m);border-radius:var(--rs);background:#fff;color:var(--ink);font-size:14px}
+.fl input:focus{outline:none;border-color:var(--slate)}
+.add-btn{padding:7px 14px;background:var(--slate);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap}
+.add-btn:hover{background:var(--navy)}
+
+/* Door chips */
+.door-chips{display:flex;flex-direction:column;gap:4px;margin-bottom:6px}
+.chip{display:flex;align-items:center;gap:7px;padding:5px 9px;background:var(--shade);border:.5px solid var(--line-m);border-radius:5px;font-size:12px}
+.chip .chip-x{margin-left:auto;background:none;border:none;cursor:pointer;font-size:14px;color:var(--muted);padding:0;line-height:1}
+.chip .chip-x:hover{color:var(--red)}
+.dstatus{display:flex;align-items:center;gap:6px;font-size:12px;padding:2px 0;color:var(--muted)}
+.dstatus.has-doors{color:var(--green);font-weight:700}
+.dstatus.warn-none{color:var(--red);font-weight:700}
+
+/* Calc button */
+#calc-btn{width:100%;padding:12px;font-size:15px;font-weight:900;background:var(--orange);color:#fff;border:none;border-radius:var(--r);cursor:pointer;margin:.5rem 0 .6rem;letter-spacing:.01em}
+#calc-btn:hover{background:var(--orange-d)}
+#calc-btn:disabled{opacity:.55;cursor:not-allowed}
+
+/* Recommendation card */
+.kit-card{background:var(--slate);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px;color:#fff}
+.kit-eyebrow{font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-bottom:4px}
+.kit-name{font-size:21px;font-weight:900;line-height:1.2;margin-bottom:5px}
+.kit-why{font-size:13px;color:rgba(255,255,255,.8);line-height:1.4;margin-bottom:10px}
+.kit-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.stat{background:rgba(255,255,255,.1);border-radius:5px;padding:7px 8px;text-align:center}
+.stat-val{display:block;font-size:17px;font-weight:900;line-height:1}
+.stat-lbl{display:block;font-size:10px;color:rgba(255,255,255,.65);margin-top:2px;line-height:1.2}
+
+/* Alternatives */
+.alts{font-size:12px;color:var(--muted);padding:6px 0 0;border-top:.5px solid var(--line);margin-top:8px}
+.alts strong{color:var(--ink)}
+.warn-box{background:#fff8f0;border:1px solid #fcd5a5;border-radius:var(--rs);padding:8px 10px;font-size:12px;color:var(--warn);margin-top:8px}
+
+/* Install steps */
+.install-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.step{background:var(--shade);border:1px solid var(--line);border-radius:var(--rs);padding:10px 9px;text-align:center}
+.step-num{width:20px;height:20px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;margin:0 auto 7px}
+.step-icon{font-size:22px;color:var(--slate);margin-bottom:6px}
+.step-title{font-size:12px;font-weight:900;color:var(--ink);margin-bottom:3px;line-height:1.2}
+.step-desc{font-size:11px;color:var(--muted);line-height:1.35}
+
+/* Materials list */
+.mat-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:var(--rs);background:var(--shade);border:.5px solid var(--line);margin-bottom:6px}
+.mat-thumb{width:40px;height:40px;border-radius:5px;background:#dde2ec;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:.5px solid #c5cbd8;font-size:18px;color:#8B95A8}
+.mat-info{flex:1;min-width:0}
+.mat-name{font-size:14px;font-weight:900;color:var(--ink);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mat-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.mat-price{font-size:11px;color:var(--muted);margin-top:2px}
+.mat-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.qty-inp{width:64px;padding:5px 4px;font-size:13px;font-weight:700;text-align:center;border:1.5px solid var(--line-m);border-radius:var(--rs);background:#fff;color:var(--ink)}
+.qty-inp:focus{outline:none;border-color:var(--slate)}
+.atc-btn{font-size:12px;font-weight:700;padding:6px 11px;border:none;border-radius:5px;cursor:pointer;background:var(--orange);color:#fff;white-space:nowrap}
+.atc-btn:hover{background:var(--orange-d)}
+.atc-btn.done{background:#085041}
+
+/* Cart footer */
+.cart-footer{background:#fff;border:2px solid var(--slate);border-radius:var(--r);overflow:hidden;margin-top:4px}
+.cart-hdr{background:var(--slate);padding:9px 14px;display:flex;justify-content:space-between;align-items:center}
+.cart-hdr p{font-size:14px;font-weight:900;color:#fff;margin:0}
+.cart-hdr span{font-size:13px;font-weight:700;color:rgba(255,255,255,.75)}
+.add-all-btn{width:calc(100% - 18px);margin:9px;padding:11px;font-size:14px;font-weight:900;background:var(--orange);color:#fff;border:none;border-radius:var(--rs);cursor:pointer}
+.add-all-btn:hover{background:var(--orange-d)}
+.note{font-size:11px;color:var(--muted);margin:.35rem 0 1.5rem;line-height:1.4}
+
+/* Footer */
+.site-ftr{border-top:1px solid var(--line);padding:20px 0 0;display:flex;flex-wrap:wrap;gap:12px 22px;justify-content:center;font-size:13px;color:var(--muted)}
+.site-ftr a{color:var(--slate)}
+
+/* Util */
+.hidden{display:none!important}
+.fmt-money{font-weight:700}
+
+@media(max-width:520px){
+  .entry-row{grid-template-columns:1fr 1fr;grid-template-rows:auto auto}
+  .entry-row .add-col{grid-column:1/-1}
+  .install-steps{grid-template-columns:repeat(2,1fr)}
+  .kit-stats{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- Header -->
+<div class="site-hdr">
+  <a href="https://bluetexinsulation.com/"><img src="../assets/bluetex-logo.png" alt="BlueTex Insulation"></a>
+  <div class="hdr-text">
+    <p>Garage Door Insulation</p>
+    <h1>Material Calculator</h1>
+    <small>Roll-Up &amp; Residential Doors</small>
+  </div>
+</div>
+
+<!-- Step 1: Your Doors -->
+<div class="sec">
+  <div class="sec-head">
+    <div class="snum">1</div>
+    <p class="stitle">Your Doors</p>
+    <p class="ssub">Enter each size and quantity</p>
+  </div>
+  <div class="entry-row">
+    <div class="fl"><label>Width (ft)</label><input type="number" id="d-w" min="1" step="0.5" placeholder="10"></div>
+    <div class="fl"><label>Height (ft)</label><input type="number" id="d-h" min="1" step="0.5" placeholder="10"></div>
+    <div class="fl"><label>Qty</label><input type="number" id="d-qty" min="1" value="1" style="text-align:center"></div>
+    <div class="add-col"><button class="add-btn" onclick="addDoor()">+ Add</button></div>
+  </div>
+  <div id="door-chips" class="door-chips"></div>
+  <div id="door-status" class="dstatus warn-none">
+    <i class="ti ti-door" style="font-size:14px"></i>
+    <span>No doors added — enter at least one door above.</span>
+  </div>
+</div>
+
+<!-- Calculate -->
+<button id="calc-btn" onclick="doCalculate()" disabled>Get Recommendation →</button>
+
+<!-- Results (hidden until calculated) -->
+<div id="results" class="hidden">
+
+  <!-- Step 2: Recommendation -->
+  <div class="sec">
+    <div class="sec-head">
+      <div class="snum">2</div>
+      <p class="stitle">Recommendation</p>
+    </div>
+    <div class="kit-card">
+      <p class="kit-eyebrow">Recommended Kit</p>
+      <p class="kit-name" id="r-kit-name">—</p>
+      <p class="kit-why" id="r-kit-why">—</p>
+      <div class="kit-stats">
+        <div class="stat"><span class="stat-val" id="r-doors">—</span><span class="stat-lbl">Doors</span></div>
+        <div class="stat"><span class="stat-val" id="r-sqft">—</span><span class="stat-lbl">Sq Ft</span></div>
+        <div class="stat"><span class="stat-val" id="r-lf">—</span><span class="stat-lbl">Linear Ft</span></div>
+        <div class="stat"><span class="stat-val" id="r-price">—</span><span class="stat-lbl">Est. Price</span></div>
+      </div>
+    </div>
+    <div id="r-alts" class="alts hidden"></div>
+    <div id="r-warnings" class="hidden"></div>
+  </div>
+
+  <!-- Step 3: How It Goes On -->
+  <div class="sec">
+    <div class="sec-head">
+      <div class="snum">3</div>
+      <p class="stitle">How Installation Works</p>
+      <p class="ssub">4 steps, no special tools</p>
+    </div>
+    <div class="install-steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-icon"><i class="ti ti-ruler-measure"></i></div>
+        <p class="step-title">Measure &amp; Clean</p>
+        <p class="step-desc">Measure door panels. Wipe surface so tape sticks firmly.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-icon"><i class="ti ti-align-center"></i></div>
+        <p class="step-title">Apply Tape</p>
+        <p class="step-desc">Press double-sided tape vertically at ~18" intervals across the door.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-icon"><i class="ti ti-layers-subtract"></i></div>
+        <p class="step-title">Apply BlueTex</p>
+        <p class="step-desc">Roll out horizontal strips from the bottom up. Press onto tape.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-icon"><i class="ti ti-writing"></i></div>
+        <p class="step-title">Tape Seams</p>
+        <p class="step-desc">Apply white seam tape over every horizontal seam. Bright, clean finish.</p>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-top:8px;text-align:center">
+      <a href="https://bluetexinsulation.com/blogs/articles/how-to-measure-your-roll-up-garage-door-for-insulation" target="_blank">Full measuring guide →</a>
+    </p>
+  </div>
+
+  <!-- Step 4: What You Need -->
+  <div class="sec">
+    <div class="sec-head">
+      <div class="snum">4</div>
+      <p class="stitle">What You Need</p>
+      <p class="ssub" id="r-mat-sub">—</p>
+    </div>
+    <div id="mat-list"></div>
+    <div class="cart-footer">
+      <div class="cart-hdr">
+        <p>Complete Order</p>
+        <span id="r-total-price">—</span>
+      </div>
+      <button class="add-all-btn" id="add-all-btn" onclick="addAllToCart()">Add All To Cart</button>
+    </div>
+    <p class="note">Tape shortfall shown if included tape may not fully cover your door layout. Prices are estimates — confirm on product page. Contact us at <a href="tel:18005958772">1-800-595-8772</a> for custom layouts.</p>
+  </div>
+
+</div><!-- /results -->
+
+<!-- Footer -->
+<div class="site-ftr">
+  <span>Need help?</span>
+  <a href="tel:18005958772">1-800-595-8772</a>
+  <a href="https://bluetexinsulation.com/blogs/articles/how-to-measure-your-roll-up-garage-door-for-insulation">Measuring Guide</a>
+  <a href="https://bluetexinsulation.com/products/bluetex-2mm-pro-roll-up-garage-door-kit">View Kits</a>
+  <a href="https://bluetexinsulation.com/pages/contact-us">Contact</a>
+</div>
+
+</div><!-- /wrap -->
+<script type="module" src="app.js"></script>
+</body>
+</html>
