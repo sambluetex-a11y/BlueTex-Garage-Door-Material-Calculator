@@ -92,25 +92,27 @@ function renderTapeSummary(model, tapeStatus) {
       return `
         <li>
           <strong>${row.qty}x ${formatFeet(row.width)} W x ${formatFeet(row.height)} H</strong>
-          <span>${plan.strips} vertical strips per door, ${formatFeet(plan.tapeFeet * row.qty)} total</span>
+          <span>${plan.strips} strips per door x ${formatFeet(row.height)} tall = ${formatFeet(plan.tapeFeet)} per door</span>
+          ${row.qty > 1 ? `<span>${formatFeet(plan.tapeFeet * row.qty)} for this door size</span>` : ""}
         </li>
       `;
     })
     .join("");
 
+  const tapeIncludedText =
+    model.recommendation.primaryPlan.tapeRolls > 0
+      ? `Recommended kits include about ${formatFeet(model.tapeFeetIncluded)}.`
+      : "Tape should be quoted with the custom setup.";
+
   tapeSummary.innerHTML = `
     <section class="tape-card">
       <div class="panel-heading">
-        <h2>Double-Sided Tape</h2>
+        <h2>Tape Recommendation</h2>
         ${tapeStatus}
       </div>
-      <p>Tape is typically applied every 12" to 18" across the door width. This estimate uses 18" spacing as a practical planning number.</p>
+      <p class="tape-total">${formatFeet(model.tapeFeetNeeded)} total double-sided tape needed. ${tapeIncludedText}</p>
+      <p>Estimate uses one vertical strip about every 18" across each door width.</p>
       <ul class="tape-list">${tapeRows}</ul>
-      <p class="tape-total">${formatFeet(model.tapeFeetNeeded)} total double-sided tape needed. ${
-        model.recommendation.primaryPlan.tapeRolls > 0
-          ? `Recommended kits include about ${formatFeet(model.tapeFeetIncluded)}.`
-          : "Tape should be quoted with the custom setup."
-      }</p>
     </section>
   `;
 }
@@ -125,7 +127,6 @@ function renderResults(model) {
   }
 
   const best = model.recommendation.primaryPlan;
-  const alternatives = model.recommendation.alternatives;
   const priceText =
     best.estimatedPrice === null
       ? "Contact for custom sizing"
@@ -158,9 +159,9 @@ function renderResults(model) {
       <small>${requiredText}</small>
     </div>
     <div class="metric">
-      <span>Tape guidance</span>
+      <span>Tape needed</span>
       <strong>${formatFeet(model.tapeFeetNeeded)}</strong>
-      <small>${model.tapePlan[0]?.spacingInches || 18}" spacing estimate; ${model.tapeShortfall > 0 ? "add tape" : "included tape looks sufficient"}</small>
+      <small>${model.tapePlan[0]?.spacingInches || 18}" spacing estimate; ${model.tapeShortfall > 0 ? "add tape" : "recommended kits include enough"}</small>
     </div>
     <div class="metric">
       <span>Fit note</span>
@@ -190,19 +191,6 @@ function renderResults(model) {
         ${best.reasoning.map((line) => `<p>${line}</p>`).join("")}
       </div>
       <ul>${kitList(best)}</ul>
-      ${
-        alternatives.length
-          ? `<p class="alternate">Alternatives: ${alternatives
-              .map((item) => {
-                const spare =
-                  item.spareLinearFeet === null
-                    ? "custom sizing"
-                    : `${formatFeet(item.requiredLinearFeet)} layout footage`;
-                return `${item.label} (${spare})`;
-              })
-              .join("; ")}.</p>`
-          : ""
-      }
       ${
         model.recommendation.warnings.length
           ? `<div class="warning-list">${model.recommendation.warnings
