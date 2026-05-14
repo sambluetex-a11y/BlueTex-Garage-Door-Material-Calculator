@@ -1,0 +1,1759 @@
+<!--
+  BlueTex Garage Door Material Calculator — Shopify Embed Version
+  ================================================================
+  This is a self-contained, single-file version of the calculator
+  built for copy-paste into the Shopify page HTML editor.
+
+  Differences from the original repo (index.html + src/ + styles.css):
+  - styles.css inlined into a <style> block
+  - src/calculator.js and src/app.js merged into one <script> block
+    (import/export keywords removed — not needed in a single file)
+  - Footer ("Need help checking an unusual door setup? ...") removed
+  - "BlueTex Insulation" brand kicker removed from header
+  - Em-dash (—) separators removed from all result panel headers
+  - Default input rows reduced from 3 to 2
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BlueTex Roll-Up Garage Door Material Calculator</title>
+    <meta name="description" content="Calculate roll-up garage door insulation linear footage, kit size, and double-sided tape strip guidance for BlueTex kits.">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <style>
+:root {
+  --sb: #f1f5f9;
+  --sd: #cbd5e1;
+  --sc: #1e293b;
+  --ab: #001b48;
+  --rh: #001b48;
+  --sn: #001b48;
+  --fsb: #ffffff;
+  --fsd: #cbd5e1;
+  --psb: #f8fafc;
+  --psd: #93a4bc;
+  --bg-p: #ffffff;
+  --bg-s: #f3f4f6;
+  --tx-p: #111827;
+  --tx-s: #6b7280;
+  --bd-l: #e5e7eb;
+  --bd-m: #d1d5db;
+  --success: #15803d;
+  --warn: #b91c1c;
+  --rmd: 6px;
+  --rlg: 8px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #f8f9fa;
+  color: var(--sc);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding: 16px;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+a {
+  color: var(--ab);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.wrap {
+  margin: 0 auto;
+  max-width: 720px;
+}
+
+.calc-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+.brand-kicker {
+  color: var(--tx-s);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  margin: 0 0 2px;
+  text-transform: uppercase;
+}
+
+h1 {
+  color: var(--tx-p);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.subtitle {
+  color: var(--tx-s);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.icon-button {
+  align-items: center;
+  background: #ffffff;
+  border: 1.5px solid var(--sd);
+  border-radius: var(--rmd);
+  color: var(--sc);
+  cursor: pointer;
+  display: flex;
+  flex: 0 0 auto;
+  height: 30px;
+  justify-content: center;
+  width: 34px;
+}
+
+.icon-button:hover {
+  border-color: var(--ab);
+}
+
+.sec {
+  background: var(--sb);
+  border: 1.5px solid var(--sd);
+  border-radius: var(--rlg);
+  margin-bottom: 0.45rem;
+  padding: 0.55rem 0.8rem;
+}
+
+.sec-head {
+  align-items: center;
+  display: flex;
+  gap: 7px;
+  margin-bottom: 8px;
+}
+
+.snum {
+  align-items: center;
+  background: var(--sn);
+  border-radius: 50%;
+  color: #ffffff;
+  display: flex;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  height: 21px;
+  justify-content: center;
+  width: 21px;
+}
+
+.stitle {
+  color: var(--sc);
+  flex: 1;
+  font-size: 15px;
+  font-weight: 700;
+  min-width: 0;
+}
+
+.door-grid-labels,
+.door-row {
+  display: grid;
+  gap: 7px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 74px;
+}
+
+.door-grid-labels {
+  display: none;
+}
+
+.door-row {
+  margin-bottom: 6px;
+}
+
+.field label {
+  color: var(--sc);
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 3px;
+  opacity: 0.85;
+}
+
+.input-shell {
+  align-items: center;
+  display: flex;
+  position: relative;
+}
+
+.input-shell span {
+  color: var(--sc);
+  font-size: 12px;
+  opacity: 0.6;
+  position: absolute;
+  right: 8px;
+}
+
+input {
+  background: #ffffff;
+  border: 1.5px solid var(--sd);
+  border-radius: var(--rmd);
+  color: var(--sc);
+  font-size: 14px;
+  min-height: 34px;
+  padding: 6px 28px 6px 8px;
+  width: 100%;
+}
+
+.qty-field input {
+  padding-left: 6px;
+  padding-right: 6px;
+  text-align: center;
+}
+
+input:focus,
+button:focus {
+  border-color: var(--ab);
+  outline: none;
+}
+
+.input-actions {
+  display: grid;
+  gap: 7px;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  margin-top: 2px;
+}
+
+.primary-button,
+.secondary-button {
+  align-items: center;
+  border-radius: var(--rlg);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 700;
+  gap: 6px;
+  justify-content: center;
+  min-height: 38px;
+  padding: 8px 10px;
+}
+
+.primary-button {
+  background: var(--ab);
+  border: 1.5px solid var(--ab);
+  color: #ffffff;
+}
+
+.secondary-button {
+  background: #ffffff;
+  border: 1.5px solid var(--sd);
+  color: var(--sc);
+}
+
+.secondary-button:hover {
+  background: #f8fafc;
+  border-color: var(--ab);
+}
+
+.summary-grid,
+.details-stack {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.res-panel {
+  background: var(--bg-p);
+  border: 1px solid var(--bd-m);
+  border-radius: var(--rlg);
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+}
+
+.res-ph {
+  align-items: center;
+  background: var(--rh);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 15px;
+}
+
+.res-ph .snum {
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+.rpt {
+  color: #ffffff;
+  font-size: 21px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rsep {
+  color: rgba(255, 255, 255, 0.55);
+  flex-shrink: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.rps {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.res-pb {
+  background: var(--bg-p);
+  padding: 3px 0;
+}
+
+.sum-row {
+  align-items: center;
+  border-bottom: 0.5px solid var(--bd-l);
+  display: flex;
+  font-size: 13px;
+  justify-content: space-between;
+  padding: 7px 15px;
+}
+
+.sum-row:last-child,
+.psum-row:last-child {
+  border-bottom: 0;
+}
+
+.sk {
+  color: var(--tx-s);
+  flex-shrink: 0;
+  padding-right: 12px;
+}
+
+.sv {
+  color: var(--tx-p);
+  font-weight: 500;
+  text-align: right;
+}
+
+.hero-result {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(120px, 0.9fr);
+}
+
+.hero-result > div {
+  padding: 10px 13px;
+}
+
+.hero-result > div:first-child {
+  border-right: 0.5px solid var(--bd-l);
+}
+
+.tiny-label {
+  color: var(--tx-s);
+  font-size: 11px;
+  margin-bottom: 3px;
+}
+
+.big-value {
+  color: var(--tx-p);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.callout {
+  background: #eff6ff;
+  border-left: 4px solid var(--ab);
+}
+
+.callout .tiny-label,
+.callout .big-value,
+.callout small {
+  color: var(--ab);
+}
+
+.callout small {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 4px;
+  opacity: 0.75;
+}
+
+.psum-row {
+  align-items: center;
+  border-bottom: 0.5px solid var(--bd-l);
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 15px;
+}
+
+.pk {
+  color: var(--tx-p);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ps {
+  color: var(--tx-s);
+  font-size: 13px;
+  line-height: 1.35;
+  margin-top: 2px;
+}
+
+.pq {
+  color: var(--ab);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.status {
+  border-radius: 5px;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 8px;
+  white-space: nowrap;
+}
+
+.status.ok {
+  background: #f0fdf4;
+  color: var(--success);
+}
+
+.status.warn {
+  background: #fef2f2;
+  color: var(--warn);
+}
+
+.warning-list {
+  background: #fef2f2;
+  border-top: 0.5px solid #fecaca;
+  padding: 8px 15px;
+}
+
+.warning-list p {
+  color: var(--warn);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+  min-width: 620px;
+  width: 100%;
+}
+
+th,
+td {
+  border-bottom: 0.5px solid var(--bd-l);
+  color: var(--tx-p);
+  font-size: 13px;
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: var(--bg-s);
+  color: var(--tx-s);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.empty-state {
+  align-items: center;
+  color: var(--tx-s);
+  display: flex;
+  gap: 8px;
+  padding: 12px 15px;
+}
+
+.empty-state i {
+  color: var(--ab);
+  font-size: 18px;
+}
+
+.empty-state strong {
+  color: var(--tx-p);
+}
+
+.shopping-list {
+  background: var(--bg-p);
+  padding: 8px 9px 0;
+}
+
+.sli {
+  align-items: center;
+  background: var(--bg-s);
+  border: 0.5px solid var(--bd-l);
+  border-radius: var(--rmd);
+  display: flex;
+  gap: 8px;
+  margin-bottom: 5px;
+  padding: 8px 10px;
+}
+
+.thumb {
+  align-items: center;
+  background: #dde2ec;
+  border: 0.5px solid #c5cbd8;
+  border-radius: 5px;
+  display: flex;
+  flex-shrink: 0;
+  height: 42px;
+  justify-content: center;
+  overflow: hidden;
+  width: 42px;
+}
+
+.thumb img {
+  display: block;
+  height: 42px;
+  object-fit: cover;
+  width: 42px;
+}
+
+.sli-info {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.sli-label {
+  color: var(--tx-p);
+  font-size: 15px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sli-sub,
+.sli-price {
+  color: var(--tx-s);
+  font-size: 11px;
+  line-height: 1.3;
+  margin-top: 1px;
+}
+
+.sli-qty {
+  color: var(--ab);
+  flex-shrink: 0;
+  font-size: 18px;
+  font-weight: 700;
+  min-width: 48px;
+  text-align: right;
+}
+
+.cart-actions {
+  padding: 2px 9px 9px;
+}
+
+.aamb {
+  background: var(--ab);
+  border: 0;
+  border-radius: var(--rmd);
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px;
+  width: 100%;
+}
+
+.aamb:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.site-footer {
+  align-items: center;
+  color: var(--tx-s);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 12px;
+  gap: 10px;
+  justify-content: center;
+  margin: 0.8rem 0 1.2rem;
+}
+
+.embed-mode {
+  padding-top: 10px;
+}
+
+.embed-mode .calc-header,
+.embed-mode .site-footer {
+  display: none;
+}
+
+@media (max-width: 620px) {
+  body {
+    padding: 10px;
+  }
+
+  .door-grid-labels {
+    display: none;
+  }
+
+  .door-row,
+  .input-actions,
+  .hero-result {
+    grid-template-columns: 1fr;
+  }
+
+  .door-row {
+    background: #ffffff;
+    border: 1px solid var(--fsd);
+    border-radius: var(--rmd);
+    padding: 0.55rem 0.65rem;
+  }
+
+  .hero-result > div:first-child {
+    border-bottom: 0.5px solid var(--bd-l);
+    border-right: 0;
+  }
+
+  .rpt {
+    font-size: 18px;
+  }
+
+  .rps {
+    font-size: 14px;
+  }
+
+  .psum-row,
+  .sum-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .sv {
+    text-align: left;
+  }
+
+  .sli {
+    align-items: flex-start;
+  }
+
+  .sli-label {
+    white-space: normal;
+  }
+}
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="calc-header">
+        <div>
+          <h1>Garage Door Material Calculator</h1>
+          <p class="subtitle">Roll-Up Door Kits · Material + Tape Plan</p>
+        </div>
+        <button class="icon-button" type="button" data-mode-toggle aria-label="Toggle embed view" aria-pressed="false" title="Embed view">
+          <i class="ti ti-arrows-minimize"></i>
+        </button>
+      </header>
+
+      <main aria-label="BlueTex roll-up garage door material calculator">
+        <section class="sec">
+          <div class="sec-head">
+            <div class="snum">1</div>
+            <p class="stitle">Garage Door Sizes</p>
+          </div>
+
+          <form data-calculator-form>
+            <div class="door-grid-labels" aria-hidden="true">
+              <span>Door Width (ft)</span>
+              <span>Door Height (ft)</span>
+              <span>Qty</span>
+            </div>
+            <div data-rows></div>
+
+            <div class="input-actions">
+              <button class="secondary-button" type="button" data-add-row>
+                <i class="ti ti-plus"></i>
+                <span>Add Another Size</span>
+              </button>
+              <button class="primary-button" type="button" data-calc-scroll>
+                Calculate Materials
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <div data-results>
+          <div class="summary-grid" data-summary></div>
+          <div class="details-stack" data-details></div>
+        </div>
+      </main>
+
+    </div>
+
+    <script>
+// ── calculator.js ──────────────────────────────────────────────────────────
+
+const KITS = [
+  {
+    id: "single",
+    name: "Single Door Kit",
+    label: "Single Garage Door Kit",
+    widthInches: 50,
+    linearFeet: 37.5,
+    coverageSqft: 150,
+    price: 189,
+    tapeRolls: 1,
+    seamTapeRolls: 1,
+    type: "50"
+  },
+  {
+    id: "double",
+    name: "Double Door Kit",
+    label: "Double Garage Door Kit",
+    widthInches: 50,
+    linearFeet: 52.5,
+    coverageSqft: 205,
+    price: 219,
+    tapeRolls: 1,
+    seamTapeRolls: 1,
+    type: "50"
+  },
+  {
+    id: "oversized",
+    name: "Oversized Door(s) Kit",
+    label: "Oversized Garage Door Kit",
+    widthInches: 50,
+    linearFeet: 72,
+    coverageSqft: 295,
+    price: 269,
+    tapeRolls: 2,
+    seamTapeRolls: 1,
+    type: "50"
+  },
+  {
+    id: "multi50",
+    name: "Multi-Door Kit - 50\" Wide",
+    label: "Multi-Door Kit - 50\" Wide",
+    widthInches: 50,
+    linearFeet: 168,
+    coverageSqft: 700,
+    price: 399,
+    tapeRolls: 3,
+    seamTapeRolls: 2,
+    type: "50",
+    multiDoor: true
+  },
+  {
+    id: "multi62",
+    name: "Multi-Door Kit - 62\" Wide",
+    label: "Multi-Door Kit - 62\" Wide",
+    widthInches: 62,
+    linearFeet: 135,
+    coverageSqft: 700,
+    price: 399,
+    tapeRolls: 3,
+    seamTapeRolls: 2,
+    type: "62",
+    multiDoor: true
+  }
+];
+
+const CUSTOM_RECOMMENDATION = {
+  id: "custom",
+  name: "Custom / Larger Roll Needed",
+  label: "Custom / Larger Roll Needed",
+  widthInches: null,
+  linearFeet: null,
+  coverageSqft: null,
+  price: null,
+  tapeRolls: 0,
+  seamTapeRolls: 0,
+  type: "custom"
+};
+
+function kitById(id) {
+  if (id === "custom") return CUSTOM_RECOMMENDATION;
+  return KITS.find((kit) => kit.id === id);
+}
+
+function planLabel(items) {
+  if (!items.length) return CUSTOM_RECOMMENDATION.label;
+  return items
+    .map((item) => `${item.quantity}x ${item.label}`)
+    .join(" + ");
+}
+
+function normalizeRows(rows) {
+  return rows
+    .map((row) => ({
+      width: Number(row.width),
+      height: Number(row.height),
+      qty: Math.max(0, Math.floor(Number(row.qty) || 0))
+    }))
+    .filter((row) => row.width > 0 && row.height > 0 && row.qty > 0)
+    .map((row) => ({
+      ...row,
+      perDoorArea: row.width * row.height,
+      totalRowArea: row.width * row.height * row.qty
+    }));
+}
+
+function mergeRows(rows) {
+  const merged = new Map();
+
+  for (const row of rows) {
+    const key = `${row.width}x${row.height}`;
+    const existing = merged.get(key);
+    if (existing) {
+      existing.qty += row.qty;
+      existing.totalRowArea += row.totalRowArea;
+    } else {
+      merged.set(key, { ...row });
+    }
+  }
+
+  return [...merged.values()];
+}
+
+function expandDoors(rows) {
+  return normalizeRows(rows).flatMap((row, groupIndex) =>
+    Array.from({ length: row.qty }, (_, qtyIndex) => ({
+      width: row.width,
+      height: row.height,
+      groupIndex,
+      instance: qtyIndex + 1,
+      squareFeet: row.perDoorArea
+    }))
+  );
+}
+
+function calculateRunsForRow(row) {
+  const runs50 = Math.ceil(row.height / 4);
+  const runs62 = Math.ceil(row.height / 5);
+
+  return {
+    width: row.width,
+    height: row.height,
+    qty: row.qty,
+    perDoorArea: row.perDoorArea,
+    totalRowArea: row.totalRowArea,
+    runs50,
+    runs62,
+    footage50: runs50 * row.width * row.qty,
+    footage62: runs62 * row.width * row.qty
+  };
+}
+
+function calculateDoor(door) {
+  const runs50 = Math.ceil(door.height / 4);
+  const runs62 = Math.ceil(door.height / 5);
+
+  return {
+    ...door,
+    runs50,
+    runs62,
+    linear50Max: runs50 * door.width,
+    linear62: runs62 * door.width,
+    eligibleForSharedTop: door.height % 4 === 2
+  };
+}
+
+function calculateSharedTopStripSavings(doors) {
+  const eligibleWidths = doors
+    .filter((door) => door.eligibleForSharedTop)
+    .map((door) => door.width)
+    .sort((a, b) => b - a);
+
+  let savings = 0;
+  for (let index = 0; index + 1 < eligibleWidths.length; index += 2) {
+    savings += Math.min(eligibleWidths[index], eligibleWidths[index + 1]);
+  }
+
+  return savings;
+}
+
+function sharedSavingsForGroup(row, qty) {
+  return row.height % 4 === 2 ? Math.floor(qty / 2) * row.width : 0;
+}
+
+function classifyRequest(rows) {
+  const normalizedRows = normalizeRows(rows);
+  const mergedRows = mergeRows(normalizedRows);
+  const totalDoorCount = normalizedRows.reduce((sum, row) => sum + row.qty, 0);
+  const totalArea = normalizedRows.reduce((sum, row) => sum + row.totalRowArea, 0);
+  const maxSingleDoorArea = normalizedRows.reduce(
+    (max, row) => Math.max(max, row.perDoorArea),
+    0
+  );
+  const allDoorsSameSize =
+    mergedRows.length === 1 && mergedRows[0].qty === totalDoorCount;
+  const onlyOneActiveDoorRow = normalizedRows.length === 1;
+  const exactlyOneTotalDoor = totalDoorCount === 1;
+  const everyDoorAtMost10x10 = normalizedRows.every(
+    (row) => row.width <= 10 && row.height <= 10
+  );
+
+  return {
+    rows: normalizedRows,
+    mergedRows,
+    totalDoorCount,
+    totalArea,
+    maxSingleDoorArea,
+    allDoorsSameSize,
+    onlyOneActiveDoorRow,
+    exactlyOneTotalDoor,
+    everyDoorAtMost10x10,
+    requestType:
+      totalDoorCount === 1
+        ? "single-door"
+        : totalDoorCount === 2
+          ? "two-door"
+          : totalDoorCount >= 3
+            ? "multi-door"
+            : "empty"
+  };
+}
+
+function calculateMaterialMath(rows) {
+  const normalizedRows = normalizeRows(rows);
+  const doors = expandDoors(rows).map(calculateDoor);
+  const runsByRow = normalizedRows.map(calculateRunsForRow);
+  const footage50 = runsByRow.reduce((sum, row) => sum + row.footage50, 0);
+  const footage62 = runsByRow.reduce((sum, row) => sum + row.footage62, 0);
+  const sharedTopStripSavings = calculateSharedTopStripSavings(doors);
+
+  return {
+    totalArea: normalizedRows.reduce((sum, row) => sum + row.totalRowArea, 0),
+    totalDoorCount: normalizedRows.reduce((sum, row) => sum + row.qty, 0),
+    footage50,
+    footage62,
+    efficient50Footage: Math.max(0, footage50 - sharedTopStripSavings),
+    sharedTopStripSavings,
+    runsByRow
+  };
+}
+
+function singleDoorFitsStandardSystem(row) {
+  return row.perDoorArea <= kitById("oversized").coverageSqft;
+}
+
+function isEightByEightMulti50(row) {
+  return row.width <= 8 && row.height <= 8;
+}
+
+function isTwelveByTwelveMulti50(row) {
+  return row.width <= 12 && row.height <= 12;
+}
+
+function isTenFootMulti62(row) {
+  return row.width <= 10 && row.height === 10;
+}
+
+function isFifteenFootMulti62(row) {
+  return row.width <= 15 && row.height === 15;
+}
+
+function preferredMultiFamily(row) {
+  if (row.qty >= 5 && isEightByEightMulti50(row)) return "multi50";
+  if (row.qty >= 3 && isTwelveByTwelveMulti50(row) && row.height === 12) {
+    return "multi50";
+  }
+  if (row.qty >= 3 && (isTenFootMulti62(row) || isFifteenFootMulti62(row))) {
+    return "multi62";
+  }
+  return null;
+}
+
+function groupFootage(row, family, qty) {
+  if (family === "multi62") {
+    return Math.ceil(row.height / 5) * row.width * qty;
+  }
+
+  return Math.ceil(row.height / 4) * row.width * qty - sharedSavingsForGroup(row, qty);
+}
+
+function canUseMulti50(row, qty) {
+  if (isEightByEightMulti50(row)) return qty >= 5 && qty <= 10;
+  if (isTwelveByTwelveMulti50(row) && row.height === 12) {
+    return qty >= 3 && qty <= 4;
+  }
+  return false;
+}
+
+function canUseMulti62(row, qty) {
+  if (!(isTenFootMulti62(row) || isFifteenFootMulti62(row))) return false;
+  return qty >= 3 && qty <= 6;
+}
+
+function makeGroupOption(row, family, qty, intentPenalty = 0) {
+  const kit = kitById(family);
+  const area = row.perDoorArea * qty;
+  const requiredLinearFeet = groupFootage(row, family, qty);
+
+  return {
+    coveredDoors: qty,
+    items: [
+      {
+        family,
+        label: kit.label,
+        quantity: 1
+      }
+    ],
+    estimatedPrice: kit.price,
+    kitCount: 1,
+    spareCapacity: Math.max(0, kit.coverageSqft - area),
+    spareLinearFeet:
+      kit.linearFeet === null ? null : kit.linearFeet - requiredLinearFeet,
+    requiredLinearFeet,
+    totalLinearFeet: kit.linearFeet,
+    tapeRolls: kit.tapeRolls,
+    seamTapeRolls: kit.seamTapeRolls,
+    intentPenalty,
+    complexity: family.startsWith("multi") ? 0 : 1,
+    assignments: [
+      {
+        family,
+        label: kit.label,
+        qty,
+        width: row.width,
+        height: row.height,
+        requiredLinearFeet,
+        area
+      }
+    ]
+  };
+}
+
+function groupOptionsForRow(row) {
+  if (!singleDoorFitsStandardSystem(row)) return [];
+
+  const options = [];
+  const preference = preferredMultiFamily(row);
+  const nonPreferredPenalty = preference ? 100 : 0;
+
+  for (let qty = 1; qty <= row.qty; qty += 1) {
+    if (qty === 1 && row.width <= 12 && row.height <= 12 && row.perDoorArea <= 150) {
+      options.push(makeGroupOption(row, "single", qty, nonPreferredPenalty));
+    }
+
+    if (
+      (qty === 2 && row.width <= 10 && row.height <= 10) ||
+      (qty === 1 && row.perDoorArea <= 205)
+    ) {
+      options.push(makeGroupOption(row, "double", qty, nonPreferredPenalty));
+    }
+
+    if (row.perDoorArea * qty <= 295) {
+      const penalty = preference ? nonPreferredPenalty : row.perDoorArea <= 150 && qty === 1 ? 8 : 0;
+      options.push(makeGroupOption(row, "oversized", qty, penalty));
+    }
+
+    if (canUseMulti50(row, qty)) {
+      options.push(makeGroupOption(row, "multi50", qty, preference === "multi50" ? 0 : 5));
+    }
+
+    if (canUseMulti62(row, qty)) {
+      options.push(makeGroupOption(row, "multi62", qty, preference === "multi62" ? 0 : 5));
+    }
+  }
+
+  return options;
+}
+
+function mergeItems(items) {
+  const merged = new Map();
+
+  for (const item of items) {
+    const existing = merged.get(item.family);
+    if (existing) {
+      existing.quantity += item.quantity;
+    } else {
+      merged.set(item.family, { ...item });
+    }
+  }
+
+  return [...merged.values()].sort((a, b) => {
+    const order = ["single", "double", "oversized", "multi50", "multi62", "custom"];
+    return order.indexOf(a.family) - order.indexOf(b.family);
+  });
+}
+
+function combinePlanParts(parts) {
+  const items = mergeItems(parts.flatMap((part) => part.items));
+  const requiredLinearFeet = parts.reduce(
+    (sum, part) => sum + (part.requiredLinearFeet || 0),
+    0
+  );
+  const totalLinearFeet = parts.every((part) => part.totalLinearFeet !== null)
+    ? parts.reduce((sum, part) => sum + part.totalLinearFeet, 0)
+    : null;
+
+  return {
+    family: items.length === 1 && items[0].quantity === 1 ? items[0].family : "bundle",
+    label: planLabel(items),
+    items,
+    estimatedPrice: parts.every((part) => part.estimatedPrice !== null)
+      ? parts.reduce((sum, part) => sum + part.estimatedPrice, 0)
+      : null,
+    requiredLinearFeet,
+    totalLinearFeet,
+    spareLinearFeet:
+      totalLinearFeet === null ? null : totalLinearFeet - requiredLinearFeet,
+    spareCapacity: parts.reduce((sum, part) => sum + part.spareCapacity, 0),
+    kitCount: parts.reduce((sum, part) => sum + part.kitCount, 0),
+    tapeRolls: parts.reduce((sum, part) => sum + part.tapeRolls, 0),
+    seamTapeRolls: parts.reduce((sum, part) => sum + part.seamTapeRolls, 0),
+    intentPenalty: parts.reduce((sum, part) => sum + part.intentPenalty, 0),
+    complexity: new Set(items.map((item) => item.family)).size,
+    assignments: parts.flatMap((part) => part.assignments)
+  };
+}
+
+function comparePlans(a, b) {
+  if (a.intentPenalty !== b.intentPenalty) return a.intentPenalty - b.intentPenalty;
+  if (a.kitCount !== b.kitCount) return a.kitCount - b.kitCount;
+  if (a.spareCapacity !== b.spareCapacity) return a.spareCapacity - b.spareCapacity;
+  if (a.spareLinearFeet !== b.spareLinearFeet) {
+    return a.spareLinearFeet - b.spareLinearFeet;
+  }
+  if (a.estimatedPrice !== b.estimatedPrice) {
+    return a.estimatedPrice - b.estimatedPrice;
+  }
+  return a.complexity - b.complexity;
+}
+
+function rowPlans(row) {
+  const options = groupOptionsForRow(row);
+  if (options.length === 0) return [];
+
+  const plansByCount = Array.from({ length: row.qty + 1 }, () => []);
+  plansByCount[0] = [
+    {
+      items: [],
+      estimatedPrice: 0,
+      kitCount: 0,
+      spareCapacity: 0,
+      spareLinearFeet: 0,
+      requiredLinearFeet: 0,
+      totalLinearFeet: 0,
+      tapeRolls: 0,
+      seamTapeRolls: 0,
+      intentPenalty: 0,
+      complexity: 0,
+      assignments: []
+    }
+  ];
+
+  for (let count = 0; count <= row.qty; count += 1) {
+    for (const current of plansByCount[count]) {
+      for (const option of options) {
+        const nextCount = count + option.coveredDoors;
+        if (nextCount > row.qty) continue;
+
+        const next = combinePlanParts([current, option]);
+        plansByCount[nextCount].push(next);
+        plansByCount[nextCount].sort(comparePlans);
+        plansByCount[nextCount] = plansByCount[nextCount].slice(0, 24);
+      }
+    }
+  }
+
+  return plansByCount[row.qty].sort(comparePlans).slice(0, 12);
+}
+
+function combineRowPlanSets(rowPlanSets) {
+  let combined = [
+    {
+      items: [],
+      estimatedPrice: 0,
+      kitCount: 0,
+      spareCapacity: 0,
+      spareLinearFeet: 0,
+      requiredLinearFeet: 0,
+      totalLinearFeet: 0,
+      tapeRolls: 0,
+      seamTapeRolls: 0,
+      intentPenalty: 0,
+      complexity: 0,
+      assignments: []
+    }
+  ];
+
+  for (const plans of rowPlanSets) {
+    const next = [];
+    for (const base of combined) {
+      for (const plan of plans) {
+        next.push(combinePlanParts([base, plan]));
+      }
+    }
+    combined = next.sort(comparePlans).slice(0, 24);
+  }
+
+  return combined.sort(comparePlans);
+}
+
+function customPlan(materialMath) {
+  return {
+    family: "custom",
+    label: CUSTOM_RECOMMENDATION.label,
+    items: [],
+    estimatedPrice: null,
+    requiredLinearFeet: null,
+    totalLinearFeet: null,
+    spareLinearFeet: null,
+    spareCapacity: null,
+    kitCount: 0,
+    tapeRolls: 0,
+    seamTapeRolls: 0,
+    intentPenalty: 1000,
+    complexity: 0,
+    assignments: [],
+    reasoning: [
+      "This layout includes at least one door outside the standard BlueTex garage door kit coverage logic.",
+      `${formatFeet(materialMath.footage50)} of 50\" planning footage and ${formatFeet(materialMath.footage62)} of 62\" planning footage were calculated for custom quoting.`
+    ]
+  };
+}
+
+function buildGlobalMultiKitCandidates(materialMath) {
+  const { efficient50Footage, footage62, totalArea, totalDoorCount } = materialMath;
+  if (totalDoorCount < 2) return [];
+
+  const candidates = [];
+
+  const m50 = kitById("multi50");
+  const n50 = Math.ceil(efficient50Footage / m50.linearFeet);
+  if (n50 >= 1 && n50 <= 4 && m50.coverageSqft * n50 >= totalArea) {
+    candidates.push(makeGlobalMultiPlan("multi50", n50, efficient50Footage, totalArea));
+  }
+
+  const m62 = kitById("multi62");
+  const n62 = Math.ceil(footage62 / m62.linearFeet);
+  if (n62 >= 1 && n62 <= 4 && m62.coverageSqft * n62 >= totalArea) {
+    candidates.push(makeGlobalMultiPlan("multi62", n62, footage62, totalArea));
+  }
+
+  return candidates;
+}
+
+function makeGlobalMultiPlan(family, count, requiredLF, totalArea) {
+  const kit = kitById(family);
+  const totalLF = kit.linearFeet * count;
+  const items = [{ family, label: kit.label, quantity: count }];
+
+  return {
+    family: count === 1 ? family : "bundle",
+    label: planLabel(items),
+    items,
+    estimatedPrice: kit.price * count,
+    requiredLinearFeet: requiredLF,
+    totalLinearFeet: totalLF,
+    spareLinearFeet: totalLF - requiredLF,
+    spareCapacity: kit.coverageSqft * count - totalArea,
+    kitCount: count,
+    tapeRolls: kit.tapeRolls * count,
+    seamTapeRolls: kit.seamTapeRolls * count,
+    intentPenalty: 0,
+    complexity: 1,
+    assignments: []
+  };
+}
+
+function buildCandidatePlans(rows) {
+  const classification = classifyRequest(rows);
+  if (classification.totalDoorCount === 0) return [];
+
+  const materialMath = calculateMaterialMath(rows);
+  const rowPlanSets = classification.mergedRows.map(rowPlans);
+
+  const perRowPlans = rowPlanSets.every((plans) => plans.length > 0)
+    ? combineRowPlanSets(rowPlanSets)
+    : [];
+
+  // Only generate global multi-kit candidates when per-row planning didn't
+  // already surface a multi-kit recommendation — avoids overriding per-row
+  // family preferences (e.g. multi50 vs multi62 for same-size door groups).
+  const bestPerRow = perRowPlans[0];
+  const perRowHasMulti = bestPerRow?.items.some((item) => item.family.startsWith("multi"));
+  const globalCandidates = perRowHasMulti ? [] : buildGlobalMultiKitCandidates(materialMath);
+
+  return [...perRowPlans, ...globalCandidates]
+    .sort(comparePlans)
+    .slice(0, 12)
+    .map(addPlanExplanation);
+}
+
+function addPlanExplanation(plan) {
+  const multiItems = plan.items.filter((item) => item.family.startsWith("multi"));
+  const hasBundle = plan.items.length > 1 || plan.items.some((item) => item.quantity > 1);
+  const reasoning = [];
+
+  if (multiItems.length > 0) {
+    reasoning.push(
+      `This request is best covered by ${planLabel(multiItems)} because those kits match the intended multi-door layout before smaller kits are stacked.`
+    );
+  }
+
+  if (hasBundle) {
+    reasoning.push(
+      "This request exceeds a single standard kit, but it is still covered by a combination of standard BlueTex garage door kits."
+    );
+  } else {
+    reasoning.push(
+      "This request fits one standard BlueTex garage door kit, so no custom roll is needed."
+    );
+  }
+
+  reasoning.push(
+    "A custom roll recommendation is only shown when a standard kit combination does not fit the entered doors."
+  );
+
+  return {
+    ...plan,
+    reasoning
+  };
+}
+
+function recommendKits(rows) {
+  const materialMath = calculateMaterialMath(rows);
+  const candidatePlans = buildCandidatePlans(rows);
+  const primaryPlan =
+    candidatePlans.length > 0 ? candidatePlans[0] : customPlan(materialMath);
+  const alternatives = candidatePlans.slice(1, 4);
+  const warnings = [];
+
+  if (primaryPlan.family === "custom") {
+    warnings.push(
+      "Standard kit combinations do not fit this request. Use the footage math for a custom roll or manual quote."
+    );
+  }
+
+  if (primaryPlan.spareLinearFeet !== null && primaryPlan.spareLinearFeet < 0) {
+    warnings.push(
+      "This recommendation follows BlueTex kit coverage limits first. Check final strip layout for unusually wide doors."
+    );
+  }
+
+  return {
+    primaryPlan,
+    primaryRecommendation: primaryPlan,
+    alternatives,
+    alternativeRecommendations: alternatives,
+    materialMath,
+    explanation: primaryPlan.reasoning || [],
+    warnings
+  };
+}
+
+function calculateTapePlan(doors, recommendation) {
+  if (!recommendation?.primaryPlan) return [];
+
+  const spacingInches = 18;
+  return doors.map((door) => {
+    const strips = Math.ceil((door.width * 12) / spacingInches) + 1;
+    const tighterStrips = Math.ceil((door.width * 12) / 12) + 1;
+    return {
+      ...door,
+      spacingInches,
+      strips,
+      tapeFeet: strips * door.height,
+      tighterStrips,
+      tighterTapeFeet: tighterStrips * door.height
+    };
+  });
+}
+
+function calculate(rows) {
+  const normalizedRows = normalizeRows(rows);
+  const doors = expandDoors(rows).map(calculateDoor);
+  const recommendation = recommendKits(rows);
+  const materialMath = recommendation.materialMath;
+  const tapePlan = calculateTapePlan(doors, recommendation);
+  const tapeFeetNeeded = tapePlan.reduce((sum, door) => sum + door.tapeFeet, 0);
+  const tighterTapeFeetNeeded = tapePlan.reduce(
+    (sum, door) => sum + door.tighterTapeFeet,
+    0
+  );
+  const tapeFeetIncluded = (recommendation.primaryPlan?.tapeRolls || 0) * 180;
+
+  return {
+    rows: normalizedRows,
+    doors,
+    totals: {
+      doorCount: materialMath.totalDoorCount,
+      squareFeet: materialMath.totalArea,
+      linear50Max: materialMath.footage50,
+      sharedSavings: materialMath.sharedTopStripSavings,
+      linear50Shared: materialMath.efficient50Footage,
+      linear62: materialMath.footage62
+    },
+    recommendation,
+    materialMath,
+    tapePlan,
+    tapeFeetNeeded,
+    tighterTapeFeetNeeded,
+    tapeFeetIncluded,
+    tapeShortfall: Math.max(0, tapeFeetNeeded - tapeFeetIncluded)
+  };
+}
+
+function formatFeet(value) {
+  if (value === null || Number.isNaN(Number(value))) return "Custom";
+  const rounded = Math.round(value * 10) / 10;
+  return Number.isInteger(rounded) ? `${rounded}'` : `${rounded.toFixed(1)}'`;
+}
+
+function formatMoney(value) {
+  if (value === null || Number.isNaN(Number(value))) return "Contact for sizing";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0
+  }).format(value);
+}
+
+// ── app.js ─────────────────────────────────────────────────────────────────
+
+const form = document.querySelector("[data-calculator-form]");
+const result = document.querySelector("[data-results]");
+const summary = document.querySelector("[data-summary]");
+const details = document.querySelector("[data-details]");
+const addRowButton = document.querySelector("[data-add-row]");
+const calcScrollButton = document.querySelector("[data-calc-scroll]");
+const modeButton = document.querySelector("[data-mode-toggle]");
+const rowsContainer = document.querySelector("[data-rows]");
+
+const PRODUCT_VARIANTS = {
+  single: {
+    variantId: 44080581017818,
+    title: "Single Door (150 sq ft roll) Kit",
+    price: 189,
+    img: "https://cdn.shopify.com/s/files/1/0013/9637/5601/files/BlueTex_2mm_50_inch_Garage_Door_Kit_-_1_door_PRICE_fd2ca9da-55b8-4532-804e-459b356c0057.png?v=1775149819"
+  },
+  double: {
+    variantId: 44080581050586,
+    title: "Double Door (210 sq ft roll) Kit",
+    price: 219,
+    img: "https://cdn.shopify.com/s/files/1/0013/9637/5601/files/BlueTex_2mm_50_inch_Garage_Door_Kit_-_2_door_57659585-1183-4c52-acbd-13ec20733a37.png?v=1775149819"
+  },
+  oversized: {
+    variantId: 44608816218330,
+    title: "Oversized Door(s) (300 sq ft roll) Kit",
+    price: 269,
+    img: "https://cdn.shopify.com/s/files/1/0013/9637/5601/files/BlueTex_2mm_50_inch_Garage_Door_Kit_-_OVERSIZED_PRICE_updated_3a6aa0a4-8c33-4087-8744-e52f1c4f82e7.png?v=1775149824"
+  },
+  multi50: {
+    variantId: 47182845870298,
+    title: "Multi-Door (50\" wide for 8'/12' tall) Kit",
+    price: 399,
+    img: "https://cdn.shopify.com/s/files/1/0013/9637/5601/files/BlueTex_2mm_50_inch_Garage_Door_Kit_-_MULTI_DOOR_with_price_8cfb06c4-2736-4c82-94dd-f3e1807640af.png?v=1775149819"
+  },
+  multi62: {
+    variantId: 47064044241114,
+    title: "Multi-Door (62\" wide for 10'/15' tall) Kit",
+    price: 399,
+    img: "https://cdn.shopify.com/s/files/1/0013/9637/5601/files/BlueTex_2mm_62_inch_Garage_Door_Kit_-_MULTI_DOOR_with_price_fc957e2e-0057-4070-b52b-e518859a3a44.png?v=1775149825"
+  }
+};
+
+let cartItems = [];
+let hasCalculated = false;
+
+const defaultRows = [
+  { width: 10, height: 10, qty: 2 },
+  { width: "", height: "", qty: 1 }
+];
+
+function rowTemplate(row, index) {
+  return `
+    <div class="door-row" data-row>
+      <div class="field">
+        <label for="width-${index}">Door Width (ft)</label>
+        <div class="input-shell">
+          <input id="width-${index}" name="width" type="number" min="1" step="0.25" value="${row.width}" inputmode="decimal" aria-label="Door width in feet">
+          <span>ft</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="height-${index}">Door Height (ft)</label>
+        <div class="input-shell">
+          <input id="height-${index}" name="height" type="number" min="1" step="0.25" value="${row.height}" inputmode="decimal" aria-label="Door height in feet">
+          <span>ft</span>
+        </div>
+      </div>
+      <div class="field qty-field">
+        <label for="qty-${index}">Qty</label>
+        <input id="qty-${index}" name="qty" type="number" min="1" step="1" value="${row.qty}" inputmode="numeric" aria-label="Quantity">
+      </div>
+    </div>
+  `;
+}
+
+function renderRows(rows = defaultRows) {
+  rowsContainer.innerHTML = rows.map(rowTemplate).join("");
+}
+
+function readRows() {
+  return [...document.querySelectorAll("[data-row]")].map((row) => ({
+    width: row.querySelector('[name="width"]').value,
+    height: row.querySelector('[name="height"]').value,
+    qty: row.querySelector('[name="qty"]').value
+  }));
+}
+
+function buildCartItems(plan) {
+  return plan.items
+    .map((item) => {
+      const product = PRODUCT_VARIANTS[item.family];
+      if (!product) return null;
+
+      return {
+        ...product,
+        family: item.family,
+        label: item.label,
+        qty: item.quantity,
+        lineTotal: product.price * item.quantity
+      };
+    })
+    .filter(Boolean);
+}
+
+function shoppingList(cartItemsForPlan) {
+  if (!cartItemsForPlan.length) {
+    return `
+      <div class="empty-state">
+        <i class="ti ti-phone"></i>
+        <span><strong>Custom quote needed.</strong> Call BlueTex to finish this order.</span>
+      </div>
+    `;
+  }
+
+  return cartItemsForPlan
+    .map(
+      (item) => `
+        <div class="sli">
+          <div class="thumb"><img src="${item.img}" alt=""></div>
+          <div class="sli-info">
+            <div class="sli-label">${item.title}</div>
+            <div class="sli-sub">${item.label}</div>
+            <div class="sli-price">${formatMoney(item.price)} each · <strong>${formatMoney(item.lineTotal)}</strong></div>
+          </div>
+          <div class="sli-qty">Qty ${item.qty}</div>
+        </div>
+      `
+    )
+    .join("");
+}
+
+function renderEmptyState() {
+  cartItems = [];
+  summary.innerHTML = `
+    <section class="res-panel">
+      <div class="res-ph">
+        <div class="snum">2</div>
+        <p class="rpt">Kit Recommendation</p>
+
+        <p class="rps">Waiting On Door Size</p>
+      </div>
+      <div class="empty-state">
+        <i class="ti ti-door"></i>
+        <span><strong>Enter at least one door size.</strong> Results will update here.</span>
+      </div>
+    </section>
+  `;
+  details.innerHTML = "";
+}
+
+function renderResults(model) {
+  if (
+    !model.materialMath.totalDoorCount ||
+    !model.recommendation?.primaryPlan
+  ) {
+    renderEmptyState();
+    return;
+  }
+
+  const best = model.recommendation.primaryPlan;
+  const priceText =
+    best.estimatedPrice === null
+      ? "Contact for custom sizing"
+      : `${formatMoney(best.estimatedPrice)} estimated kit price`;
+  const spareText =
+    best.spareLinearFeet === null
+      ? "Use the footage below for custom quoting"
+      : best.spareLinearFeet >= 0
+        ? `${formatFeet(best.spareLinearFeet)} spare material in this recommendation`
+        : "Selected by product-family coverage limits";
+  const tapeStatus =
+    model.tapeShortfall > 0
+      ? `<span class="status warn">Add tape recommended</span>`
+      : `<span class="status ok">Included tape covers this layout</span>`;
+  cartItems = buildCartItems(best);
+
+  summary.innerHTML = `
+    <section class="res-panel" id="results-start">
+      <div class="res-ph">
+        <div class="snum">2</div>
+        <p class="rpt">Kit Recommendation</p>
+
+        <p class="rps">${best.label}</p>
+      </div>
+      <div class="res-pb">
+        <div class="hero-result">
+          <div>
+            <p class="tiny-label">Recommended Kit Plan</p>
+            <p class="big-value">${best.label}</p>
+            <small class="ps">${priceText}</small>
+          </div>
+          <div class="callout">
+            <p class="tiny-label">Layout Footage</p>
+            <p class="big-value">${formatFeet(best.requiredLinearFeet)}</p>
+            <small>${spareText}</small>
+          </div>
+        </div>
+        <div class="sum-row"><span class="sk">Door Coverage</span><span class="sv">${model.materialMath.totalDoorCount} door${model.materialMath.totalDoorCount === 1 ? "" : "s"} · ${Math.round(model.materialMath.totalArea).toLocaleString()} sq ft</span></div>
+        <div class="sum-row"><span class="sk">Double-Sided Tape Included</span><span class="sv">${best.tapeRolls} roll${best.tapeRolls === 1 ? "" : "s"} · ${formatFeet(model.tapeFeetIncluded)}</span></div>
+        <div class="sum-row"><span class="sk">Seam Tape Included</span><span class="sv">${best.seamTapeRolls} roll${best.seamTapeRolls === 1 ? "" : "s"}</span></div>
+        ${
+          model.recommendation.warnings.length
+            ? `<div class="warning-list">${model.recommendation.warnings
+                .map((warning) => `<p>${warning}</p>`)
+                .join("")}</div>`
+            : ""
+        }
+      </div>
+    </section>
+  `;
+
+  details.innerHTML = `
+    <section class="res-panel">
+      <div class="res-ph">
+        <div class="snum">3</div>
+        <p class="rpt">Material + Tape</p>
+
+        ${tapeStatus}
+      </div>
+      <div class="res-pb">
+        <div class="sum-row"><span class="sk">Door Area</span><span class="sv">${Math.round(model.materialMath.totalArea).toLocaleString()} sq ft</span></div>
+        <div class="sum-row"><span class="sk">Material Layout</span><span class="sv">${formatFeet(best.requiredLinearFeet)}</span></div>
+        <div class="sum-row"><span class="sk">Tape Needed</span><span class="sv">${formatFeet(model.tapeFeetNeeded)}</span></div>
+      </div>
+    </section>
+
+    <section class="res-panel">
+      <div class="res-ph">
+        <div class="snum">4</div>
+        <p class="rpt">Products To Order</p>
+
+        <p class="rps">${cartItems.length ? formatMoney(cartItems.reduce((sum, item) => sum + item.lineTotal, 0)) : "Custom Quote"}</p>
+      </div>
+      <div class="shopping-list">
+        ${shoppingList(cartItems)}
+      </div>
+      <div class="cart-actions">
+        <button class="aamb" type="button" data-add-cart ${cartItems.length ? "" : "disabled"}>Add to Cart</button>
+      </div>
+    </section>
+  `;
+
+  document.querySelector("[data-add-cart]")?.addEventListener("click", addRecommendedToCart);
+}
+
+function update() {
+  if (!hasCalculated) {
+    renderEmptyState();
+    return;
+  }
+
+  renderResults(calculate(readRows()));
+}
+
+function applyEmbedModeFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("embed") === "1") {
+    document.body.classList.add("embed-mode");
+    modeButton.setAttribute("aria-pressed", "true");
+  }
+}
+
+renderRows();
+applyEmbedModeFromUrl();
+update();
+
+form.addEventListener("input", update);
+form.addEventListener("submit", (event) => event.preventDefault());
+
+addRowButton.addEventListener("click", () => {
+  const rows = readRows();
+  if (rows.length >= 6) return;
+  rows.push({ width: "", height: "", qty: 1 });
+  renderRows(rows);
+  update();
+});
+
+calcScrollButton.addEventListener("click", () => {
+  hasCalculated = true;
+  update();
+  result.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+async function addRecommendedToCart() {
+  const button = document.querySelector("[data-add-cart]");
+  if (!button || !cartItems.length) return;
+
+  button.textContent = "Adding...";
+  button.disabled = true;
+
+  try {
+    const response = await fetch("/cart/add.js", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json"
+      },
+      body: JSON.stringify({
+        items: cartItems.map((item) => ({
+          id: item.variantId,
+          quantity: item.qty
+        }))
+      })
+    });
+
+    if (!response.ok) throw new Error("Cart request failed");
+    window.location.href = "/cart";
+  } catch {
+    button.textContent = "Add to Cart";
+    button.disabled = false;
+    alert("Cart add works when this calculator is embedded on the BlueTex Shopify site.");
+  }
+}
+
+modeButton.addEventListener("click", () => {
+  document.body.classList.toggle("embed-mode");
+  modeButton.setAttribute(
+    "aria-pressed",
+    document.body.classList.contains("embed-mode").toString()
+  );
+});
+    </script>
+  </body>
+</html>
